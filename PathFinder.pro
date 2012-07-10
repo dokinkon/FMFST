@@ -6,47 +6,47 @@
 
 QT       += core gui
 
-TARGET = PathFinder
+TARGET = FMFST
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    tableeditor.cpp \
-    tabletabwidget.cpp \
-    resourceeditor.cpp \
-    pathweighteditor.cpp \
-    canvas.cpp \
-    nodeeditor.cpp \
-    node.cpp \
-    graphicsscene.cpp \
-    nodeitem.cpp \
-    connectionitem.cpp \
-    fmfst.cpp \
-    fmfstdialog.cpp \
-    edge.cpp \
-    graph.cpp
+SOURCES +=  source/main.cpp\
+            source/mainwindow.cpp \
+            source/tableeditor.cpp \
+            source/tabletabwidget.cpp \
+            source/resourceeditor.cpp \
+            source/pathweighteditor.cpp \
+            source/canvas.cpp \
+            source/nodeeditor.cpp \
+            source/node.cpp \
+            source/graphicsscene.cpp \
+            source/nodeitem.cpp \
+            source/connectionitem.cpp \
+            source/fmfst.cpp \
+            source/fmfstdialog.cpp \
+            source/edge.cpp \
+            source/graph.cpp
 
-HEADERS  += mainwindow.h \
-    tableeditor.h \
-    tabletabwidget.h \
-    resourceeditor.h \
-    pathweighteditor.h \
-    canvas.h \
-    nodeeditor.h \
-    node.h \
-    graphicsscene.h \
-    nodeitem.h \
-    connectionitem.h \
-    fmfst.h \
-    fmfstdialog.h \
-    edge.h \
-    graph.h
+HEADERS  += source/mainwindow.h \
+            source/tableeditor.h \
+            source/tabletabwidget.h \
+            source/resourceeditor.h \
+            source/pathweighteditor.h \
+            source/canvas.h \
+            source/nodeeditor.h \
+            source/node.h \
+            source/graphicsscene.h \
+            source/nodeitem.h \
+            source/connectionitem.h \
+            source/fmfst.h \
+            source/fmfstdialog.h \
+            source/edge.h \
+            source/graph.h
 
-FORMS    += mainwindow.ui \
-    tableeditor.ui \
-    tabletabwidget.ui \
-    resourceeditor.ui \
-    pathweighteditor.ui \
-    nodeeditor.ui \
-    fmfstdialog.ui
+FORMS    += form/mainwindow.ui \
+            form/tableeditor.ui \
+            form/tabletabwidget.ui \
+            form/resourceeditor.ui \
+            form/pathweighteditor.ui \
+            form/nodeeditor.ui \
+            form/fmfstdialog.ui
