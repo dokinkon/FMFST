@@ -8,7 +8,7 @@
 
 namespace {
 
-const static int RowCount = 14;
+const static int RowCount = 15;
 const static QString FileName = "weight.dat";
 const static int TimeWeightCol = 1;
 const static int PathRelCol    = 2;
@@ -27,7 +27,8 @@ static const int edgeMap[][2] = {
     {7, 8},
     {8, 10},
     {10, 11},
-    {11, 12}
+    {11, 12},
+    {3, 11},
 };
 
 static PathWeightEditor* sharedInstance = NULL;

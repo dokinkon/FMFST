@@ -34,7 +34,8 @@ static const int edgeMap[][2] = {
     {7, 8},
     {8, 10},
     {10, 11},
-    {11, 12}
+    {11, 12},
+    {3, 11}
 };
 
 }
@@ -47,17 +48,25 @@ bool FMFST::isMFST(const Graph& fst)
 
     foreach (const Graph& tree, mFounds) {
         if (fst.contains(tree)) {
-            mFounds.removeAll(tree);
-            return true;
+            qDebug() << "=======================";
+            qDebug() << "NOT MFST:";
+            dumpGraph(fst);
+            qDebug() << "=======================";
+            return false;
         }
     }
 
     foreach (const Graph& tree, mFounds) {
         if (tree.contains(fst)) {
-            return false;
+            mFounds.removeAll(tree);
+            qDebug() << "=======================";
+            qDebug() << "IS MFST:";
+            dumpGraph(fst);
+            qDebug() << "=======================";
+            return true;
         }
     }
-    return false;
+    return true;
 }
 
 QSet<Edge> FMFST::getSpanningEdgesFromFST(const Graph& fst)
@@ -122,11 +131,15 @@ void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn)
 	// dump spanning edges
 	qDebug() << "SPANNING EDGES:";
 	foreach (const Edge& e, spanningEdges) {
-		qDebug() << e.v1() << "," << e.v2();
+        qDebug() << "X" << e.v1() + 1 << ", X" << e.v2() + 1;
 	}
 
     foreach (const Edge& a, spanningEdges) {
+        qDebug() << "CHECK EDGE: X" << a.v1() + 1 << ", X" << a.v2() +1;
         G.removeEdge(a);
+        qDebug() << "G IS:";
+        dumpGraph(G);
+
 
         int y;
 
@@ -142,6 +155,9 @@ void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn)
 
         QSet<QString> newFn = fn;
         newFn -= mNodeData[y].getFA().toSet();
+
+        qDebug() << "FA on node X" << y + 1 << " are" << mNodeData[y].getFA().toSet();
+
         findMFST(extendFST, newFn);
         T.insert(a);
     }
@@ -185,6 +201,7 @@ void FMFST::run(const QString& program, const QSet<QString>& fn)
         QSet<QString> newFn = fn;
         findMFST(node, newFn.subtract(fa));
         G.removeNode(node);
+        qDebug() << "REMOVE NODE X" << node;
     }
 
     qDebug() << "RESULTS:";
@@ -209,7 +226,7 @@ void FMFST::run(const QString& program, const QSet<QString>& fn)
     //foreach (const DCSEdge& edge, solution.edges()) {
         //GetGraphicsScene().highlightEdge(edge.v1().getName(), edge.v2().getName());
     //}
-    //GetGraphicsScene().update();
+    GetGraphicsScene().update();
 }
 
 //---------------------------------------------
@@ -236,7 +253,7 @@ void FMFST::init(const QVector<Node>& nodeData)
     QVector<float> lengths = GetPathWeightEditor().pathWeights();
     QVector<Node> nodes = GetNodeEditor().nodes();
 
-    for (int i=0;i<14;++i) {
+    for (int i=0;i<15;++i) {
         mDCSGraph.insertEdge(edgeMap[i][0], edgeMap[i][1], lengths[i]);
     }
 

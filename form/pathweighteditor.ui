@@ -17,7 +17,7 @@
    <item>
     <widget class="QTableWidget" name="tableWidgetContent">
      <property name="rowCount">
-      <number>14</number>
+      <number>15</number>
      </property>
      <property name="columnCount">
       <number>3</number>
@@ -25,6 +25,7 @@
      <attribute name="verticalHeaderVisible">
       <bool>false</bool>
      </attribute>
+     <row/>
      <row/>
      <row/>
      <row/>
@@ -133,6 +134,11 @@
      <item row="13" column="0">
       <property name="text">
        <string>X11,X13</string>
+      </property>
+     </item>
+     <item row="14" column="0">
+      <property name="text">
+       <string>X4,X12</string>
       </property>
      </item>
     </widget>

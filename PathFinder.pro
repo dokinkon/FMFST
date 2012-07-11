@@ -50,3 +50,6 @@ FORMS    += form/mainwindow.ui \
             form/pathweighteditor.ui \
             form/nodeeditor.ui \
             form/fmfstdialog.ui
+
+RESOURCES += \
+    FMFST.qrc

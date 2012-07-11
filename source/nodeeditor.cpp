@@ -171,7 +171,8 @@ bool NodeEditor::Private::serialize()
 
 bool NodeEditor::Private::deserialize()
 {
-    QFile f("node.dat");
+    //QFile f("node.dat");
+    QFile f(":defaults/resource/node.dat.default");
     if (!f.open(QIODevice::ReadOnly)) {
         qDebug() << "FAILED TO OPEN \"node.dat\"";
         return false;
