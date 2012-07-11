@@ -79,6 +79,8 @@ void MainWindow::slotFindMSPT()
         }
     }
 
+	dialog.commit();
+
     FMFST fmfst;
     fmfst.init(GetNodeEditor().nodes());
     fmfst.run(program, fn);

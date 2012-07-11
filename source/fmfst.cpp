@@ -102,7 +102,7 @@ void FMFST::findMFST(int nodeIndex, const QSet<QString>& fn)
 void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn)
 {
     qDebug() << "-----------------------------------------------";
-    qDebug() << "findMFST:";
+    qDebug() << "findMFST:" << ++mIterations; 
     dumpGraph(fst);
     qDebug() << "FN:" << fn;
     qDebug() << "-----------------------------------------------";
@@ -118,6 +118,13 @@ void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn)
 
     QSet<Edge> T;
     QSet<Edge> spanningEdges = getSpanningEdgesFromFST(fst);
+
+	// dump spanning edges
+	qDebug() << "SPANNING EDGES:";
+	foreach (const Edge& e, spanningEdges) {
+		qDebug() << e.v1() << "," << e.v2();
+	}
+
     foreach (const Edge& a, spanningEdges) {
         G.removeEdge(a);
 
@@ -168,6 +175,7 @@ void FMFST::run(const QString& program, const QSet<QString>& fn)
     //qDebug() << "G:" << G.toString();
     //qDebug() << "FN:" << FN;
     //qDebug() << "--------------------------------------------------";
+	mIterations = 0;
 
     // 1. Get nodes that contain the program P
     QSet<int> nodes = findNodesWithProgram(program);
@@ -194,10 +202,10 @@ void FMFST::run(const QString& program, const QSet<QString>& fn)
     }
 
     // Update The Solution To GraphicsScene
-    //GetGraphicsScene().clearHighlight();
-    //foreach (const Node& node, solution.nodes()) {
-        //GetGraphicsScene().highlightNode(node.getName());
-    //}
+    GetGraphicsScene().clearHighlight();
+    foreach (int node, solution.nodes()) {
+        GetGraphicsScene().highlightNode(mNodeData[node].getName());
+    }
     //foreach (const DCSEdge& edge, solution.edges()) {
         //GetGraphicsScene().highlightEdge(edge.v1().getName(), edge.v2().getName());
     //}

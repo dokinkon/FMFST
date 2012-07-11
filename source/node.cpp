@@ -81,6 +81,7 @@ QString Node::getName() const
 
 Node& Node::setFA(const QString& fa)
 {
+	mFA.clear();
     mFA.append(fa);
     mFA.removeDuplicates();
     return *this;
@@ -88,6 +89,7 @@ Node& Node::setFA(const QString& fa)
 
 Node& Node::setFA(const QStringList& fa)
 {
+	mFA.clear();
     mFA.append(fa);
     mFA.removeDuplicates();
     return *this;

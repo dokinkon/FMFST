@@ -17,6 +17,7 @@ public:
 
     QString getProgram() const;
     QSet<QString> getFN() const;
+	void commit();
     
 private:
     Ui::FMFSTDialog *ui;

@@ -2,6 +2,9 @@
 #include "node.h"
 
 Edge::Edge()
+    : mV1(-1)
+    , mV2(-1)
+    , mLength(0)
 {
 }
 
