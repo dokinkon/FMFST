@@ -58,7 +58,10 @@ void ConnectionItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* it
 {
     painter->save();
     if (mPrivate->mHighlightEnabled) {
-        setPen(QPen(QColor(255, 0, 0)));
+        QPen pen(QColor(255, 0, 0));
+        pen.setWidth(2);
+        setPen(pen);
+
     } else {
         setPen(QPen(QColor(0, 0, 0)));
     }

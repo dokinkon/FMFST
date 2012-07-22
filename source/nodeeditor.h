@@ -18,6 +18,7 @@ public:
     QVector<Node> nodes() const;
     bool hasProgram(const QString&) const;
     bool hasFile(const QString&) const;
+    QSet<int> getNecessaryNodes() const;
 
 protected:
     void closeEvent(QCloseEvent*);

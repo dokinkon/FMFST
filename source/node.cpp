@@ -100,21 +100,20 @@ QStringList Node::getFA() const
     return mFA;
 }
 
-Node& Node::setPA(const QString& pa)
+Node& Node::setPA(const QString& pa, int familiar)
 {
-    mPA.append(pa);
-    mPA.removeDuplicates();
+    mPA[pa] = familiar;
     return *this;
 }
 
-Node& Node::setPA(const QStringList& pa)
+Node& Node::setPA(const QMap<QString, int>& pa)
 {
-    mPA.append(pa);
-    mPA.removeDuplicates();
+    mPA = pa;
+    mPA.remove("");
     return *this;
 }
 
-QStringList Node::getPA() const
+QMap<QString, int> Node::getPA() const
 {
     return mPA;
 }
@@ -132,7 +131,6 @@ void Node::connectTo(const Node& n)
         return;
 
     mConnecteds.insert(n);
-   // n.connectTo(*this);
 }
 
 void Node::disconnectFrom(const Node& n)

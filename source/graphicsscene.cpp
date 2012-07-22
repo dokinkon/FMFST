@@ -217,6 +217,11 @@ void GraphicsScene::clearHighlight()
     foreach (NodeItem* item, mPrivate->mNodeItems) {
         item->setHighlightMode(NodeItem::HighlightOff);
     }
+
+    foreach (ConnectionItem* item, mPrivate->mConnectionItems) {
+        item->setHighlightEnabled(false);
+    }
+
     update();
 }
 

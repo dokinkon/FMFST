@@ -101,14 +101,14 @@ QSet<int> FMFST::findNodesWithProgram(const QString& program)
     return nodes;
 }
 
-void FMFST::findMFST(int nodeIndex, const QSet<QString>& fn)
+void FMFST::findMFST(int nodeIndex, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
 {
     Graph fst;
     fst.insertNode(nodeIndex);
-    findMFST(fst, fn);
+    findMFST(fst, fn, necessaryNodes);
 }
 
-void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn)
+void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
 {
     qDebug() << "-----------------------------------------------";
     qDebug() << "findMFST:" << ++mIterations; 
@@ -116,10 +116,10 @@ void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn)
     qDebug() << "FN:" << fn;
     qDebug() << "-----------------------------------------------";
 
-    if (fn.isEmpty()) {
+    if (fn.isEmpty() && necessaryNodes.isEmpty()) {
         if (isMFST(fst)) {
             mFounds.append(fst);
-            qDebug() << "Add MFST:";// << fst.toString();
+            qDebug() << "Add MFST:";
             dumpGraph(fst);
         }
         return;
@@ -158,7 +158,13 @@ void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn)
 
         qDebug() << "FA on node X" << y + 1 << " are" << mNodeData[y].getFA().toSet();
 
-        findMFST(extendFST, newFn);
+        // update necessayNodes
+        QSet<int> nn = necessaryNodes;
+        if (nn.contains(y)) {
+            nn.remove(y);
+        }
+
+        findMFST(extendFST, newFn, nn);
         T.insert(a);
     }
 
@@ -183,7 +189,19 @@ void FMFST::dumpGraph(const Graph& g)
     qDebug() << "}\n";
 }
 
-void FMFST::run(const QString& program, const QSet<QString>& fn)
+float FMFST::getMinimumEdgeLength(const QString& program, const Graph& g)
+{
+    foreach (int n, findNodesWithProgram(program)) {
+        if (g.containsNode(n)) {
+            int familiar = mNodeData[n].getPA()[program];
+            return (float)g.getTotalEdgeLength() / familiar;
+        }
+    }
+    // something wrong...
+    return g.getTotalEdgeLength();
+}
+
+void FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
 {
     G = mDCSGraph;
     //qDebug() << "--------------------------------------------------";
@@ -199,7 +217,7 @@ void FMFST::run(const QString& program, const QSet<QString>& fn)
     foreach (int node, nodes) {
         QSet<QString> fa = mNodeData[node].getFA().toSet();
         QSet<QString> newFn = fn;
-        findMFST(node, newFn.subtract(fa));
+        findMFST(node, newFn.subtract(fa), necessaryNodes);
         G.removeNode(node);
         qDebug() << "REMOVE NODE X" << node;
     }
@@ -212,20 +230,21 @@ void FMFST::run(const QString& program, const QSet<QString>& fn)
         dumpGraph(fst);
         qDebug() << "EDGE LENGTH:" << fst.getTotalEdgeLength();
 
-        if (fst.getTotalEdgeLength()<minLength) {
-            minLength = fst.getTotalEdgeLength();
+        float len = getMinimumEdgeLength(program, fst);
+
+        if (len<minLength) {
+            minLength = len;
             solution = fst;
         }
     }
-
     // Update The Solution To GraphicsScene
     GetGraphicsScene().clearHighlight();
     foreach (int node, solution.nodes()) {
         GetGraphicsScene().highlightNode(mNodeData[node].getName());
     }
-    //foreach (const DCSEdge& edge, solution.edges()) {
-        //GetGraphicsScene().highlightEdge(edge.v1().getName(), edge.v2().getName());
-    //}
+    foreach (const Edge& edge, solution.edges()) {
+        GetGraphicsScene().highlightEdge(mNodeData[edge.v1()].getName(), mNodeData[edge.v2()].getName());
+    }
     GetGraphicsScene().update();
 }
 
@@ -260,12 +279,6 @@ void FMFST::init(const QVector<Node>& nodeData)
     G = mDCSGraph;
 }
 
-/*
-Graph<Node>& GetSharedDCSGraph() {
-    static DCSGraph sharedGraph;
-    return sharedGraph;
-}
-*/
 
 
 

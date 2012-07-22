@@ -81,7 +81,9 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* item, QW
     // Draw FA
     painter->drawText(QRectF(-Radius/2, Radius/3-Radius/2, Radius, Radius/3), Qt::AlignCenter, mPrivate->mNode.getFA().join(","));
     // Draw PA
-    painter->drawText(QRectF(-Radius/2, Radius/3*2-Radius/2, Radius, Radius/3), Qt::AlignCenter, mPrivate->mNode.getPA().join(","));
+
+    QStringList pa = mPrivate->mNode.getPA().keys();
+    painter->drawText(QRectF(-Radius/2, Radius/3*2-Radius/2, Radius, Radius/3), Qt::AlignCenter, pa.join(","));
     painter->restore();
 }
 

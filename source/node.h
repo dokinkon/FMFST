@@ -31,9 +31,9 @@ public:
     Node& setFA(const QStringList&);
     QStringList getFA() const;
 
-    Node& setPA(const QString&);
-    Node& setPA(const QStringList&);
-    QStringList getPA() const;
+    Node& setPA(const QString&, int = 100);
+    Node& setPA(const QMap<QString, int>&);
+    QMap<QString, int> getPA() const;
 
     QString toString() const;
 
@@ -41,8 +41,7 @@ private:
     int mId;
     QString mName;
     QStringList mFA;
-    QStringList mPA;
-
+    QMap<QString, int> mPA;
     QSet<Node> mConnecteds;
 };
 

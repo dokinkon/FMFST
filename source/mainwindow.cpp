@@ -83,7 +83,19 @@ void MainWindow::slotFindMSPT()
 
     FMFST fmfst;
     fmfst.init(GetNodeEditor().nodes());
-    fmfst.run(program, fn);
+
+    QSet<int> necessaryNodes = GetNodeEditor().getNecessaryNodes();
+    QVector<Node> nodes = GetNodeEditor().nodes();
+    foreach (int nodeIndex, necessaryNodes) {
+        Node& node = nodes[nodeIndex];
+        foreach (const QString& f, node.getFA()) {
+            if (fn.contains(f)) {
+                fn.remove(f);
+            }
+        }
+    }
+
+    fmfst.run(program, fn, necessaryNodes);
 }
 
 
