@@ -13,7 +13,7 @@ public:
     /*!
      *
      */
-    void run(const QString& program, const QSet<QString>& fileSet, const QSet<int>& necessaryNodes);
+    QString run(const QString& program, const QSet<QString>& fileSet, const QSet<int>& necessaryNodes);
 private:
 
     void findMFST(int, const QSet<QString>&, const QSet<int>& necessaryNodes);

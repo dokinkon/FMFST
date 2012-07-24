@@ -6,6 +6,7 @@
 #include "fmfst.h"
 #include "fmfstdialog.h"
 #include "ui_mainwindow.h"
+#include "resultdialog.h"
 
 #include <QtCore>
 #include <QtGui>
@@ -84,10 +85,34 @@ void MainWindow::slotFindMSPT()
     FMFST fmfst;
     fmfst.init(GetNodeEditor().nodes());
 
+
     QSet<int> necessaryNodes = GetNodeEditor().getNecessaryNodes();
     QVector<Node> nodes = GetNodeEditor().nodes();
+
+    QSet<int>::Iterator it = necessaryNodes.begin();
+    while (it!=necessaryNodes.end()) {
+        int nodeIndex = *it;
+        Node& node = nodes[nodeIndex];
+        bool isValid = false;
+        foreach (const QString& f, node.getFA()) {
+            if (fn.contains(f)) {
+                isValid = true;
+                break;
+            }
+        }
+
+        if (!isValid) {
+            it = necessaryNodes.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+
+
     foreach (int nodeIndex, necessaryNodes) {
         Node& node = nodes[nodeIndex];
+
         foreach (const QString& f, node.getFA()) {
             if (fn.contains(f)) {
                 fn.remove(f);
@@ -95,7 +120,11 @@ void MainWindow::slotFindMSPT()
         }
     }
 
-    fmfst.run(program, fn, necessaryNodes);
+
+    QString result = fmfst.run(program, fn, necessaryNodes);
+    ResultDialog resultDialog(this);
+    resultDialog.setResult(result);
+    resultDialog.exec();
 }
 
 

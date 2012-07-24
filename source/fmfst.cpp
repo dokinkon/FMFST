@@ -201,7 +201,56 @@ float FMFST::getMinimumEdgeLength(const QString& program, const Graph& g)
     return g.getTotalEdgeLength();
 }
 
-void FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
+static QString FormatResult(const QList<Graph>& trees, const QVector<Node>& nodes, const QSet<int>& starts, const QSet<int>& necessaryNodes)
+{
+    QString result;
+    foreach (const Graph& tree, trees) {
+        result.append("\n");
+
+        int start = -1;
+        foreach (int i, starts) {
+            if (tree.containsNode(i)) {
+                start = i;
+                break;
+            }
+        }
+
+        QSet<int> dumpped;
+
+        if (start==-1) {
+            result.append("起點:有誤\n");
+        } else {
+            result.append(QString::fromUtf8("起點：")).append(nodes[start].getName()).append("\n");
+            dumpped.insert(start);
+        }
+
+        result.append(QString::fromUtf8("連接必經點:"));
+        foreach (int i, necessaryNodes) {
+
+            if (tree.containsNode(i)) {
+                result.append(nodes[i].getName()).append(" ");
+                dumpped.insert(i);
+            }
+        }
+        result.append("\n");
+
+        QSet<int> ns = tree.nodes();
+        foreach (int i, dumpped) {
+            ns.remove(i);
+        }
+
+        result.append(QString::fromUtf8("經過節點:"));
+        foreach (int i, ns) {
+            result.append(nodes[i].getName()).append(" ");
+        }
+        result.append("\n");
+        result.append("=================\n");
+    }
+
+    return result;
+}
+
+QString FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
 {
     G = mDCSGraph;
     //qDebug() << "--------------------------------------------------";
@@ -211,10 +260,12 @@ void FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<int>
     //qDebug() << "--------------------------------------------------";
 	mIterations = 0;
 
+    // remove the necessaryNodes that does not contain fn
+
     // 1. Get nodes that contain the program P
-    QSet<int> nodes = findNodesWithProgram(program);
-    qDebug() << "INIT NODES:" << nodes;
-    foreach (int node, nodes) {
+    QSet<int> starts = findNodesWithProgram(program);
+    //qDebug() << "INIT NODES:" << nodes;
+    foreach (int node, starts) {
         QSet<QString> fa = mNodeData[node].getFA().toSet();
         QSet<QString> newFn = fn;
         findMFST(node, newFn.subtract(fa), necessaryNodes);
@@ -246,6 +297,8 @@ void FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<int>
         GetGraphicsScene().highlightEdge(mNodeData[edge.v1()].getName(), mNodeData[edge.v2()].getName());
     }
     GetGraphicsScene().update();
+
+    return FormatResult(mFounds, mNodeData, starts, necessaryNodes);
 }
 
 //---------------------------------------------
