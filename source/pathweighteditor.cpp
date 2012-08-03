@@ -1,5 +1,8 @@
 #include "pathweighteditor.h"
+#include "nodeeditor.h"
 #include "graphicsscene.h"
+#include "edge.h"
+#include "node.h"
 #include "ui_pathweighteditor.h"
 
 #include <QtCore>
@@ -12,6 +15,10 @@ const static int RowCount = 15;
 const static QString FileName = "weight.dat";
 const static int TimeWeightCol = 1;
 const static int PathRelCol    = 2;
+
+
+static const int RoleNode1 = Qt::UserRole + 1;
+static const int RoleNode2 = Qt::UserRole + 2;
 
 static const int edgeMap[][2] = {
     {0, 1},
@@ -43,13 +50,20 @@ struct PathWeightEditor::Private
     // from ui to data model
     void commitData(QTableWidget*);
     // from data model to ui
-    void updateData(QTableWidget*);
+    void updateData(QTableWidget*, bool needDeserialize = true);
 
     bool serialize();
     bool deserialize();
 
     int mTimeWeights[RowCount];
     float mReliabilities[RowCount];
+
+    QList<Edge> mEdges;
+
+
+
+
+
 
     bool mSerializeEnabled;
 };
@@ -86,26 +100,38 @@ void PathWeightEditor::Private::commitData(QTableWidget* w)
     GetGraphicsScene().update();
 }
 
-void PathWeightEditor::Private::updateData(QTableWidget* w)
+void PathWeightEditor::Private::updateData(QTableWidget* w, bool needDeserialize)
 {
     if (!w)
         return;
 
-    if (!deserialize())
-        return;
+    if (needDeserialize) {
+        if (!deserialize())
+            return;
+    }
 
-    for (int i=0;i<RowCount;++i) {
+    w->clearContents();
+    w->setRowCount(mEdges.size());
+    w->setColumnCount(3);
 
-        QTableWidgetItem* item = new QTableWidgetItem(QString::number(mTimeWeights[i]));
+    for (int i=0;i<mEdges.size();++i) {
+
+        const Edge& edge = mEdges.at(i);
+        Node node1 = GetNodeEditor().getNode(edge.v1());
+        Node node2 = GetNodeEditor().getNode(edge.v2());
+
+        // create name item
+        QString name = QString("%1, %2").arg(node1.getName()).arg(node2.getName());
+        QTableWidgetItem* item = new QTableWidgetItem(name);
+        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        w->setItem(i, 0, item);
+
+        // create time weight
+        item = new QTableWidgetItem(QString::number(edge.getTimeWeight()));
         w->setItem(i, TimeWeightCol, item);
 
-        item = new QTableWidgetItem(QString::number(mReliabilities[i], 'g', 2));
+        item = new QTableWidgetItem(QString::number(edge.getReliability(), 'g', 2));
         w->setItem(i, PathRelCol, item);
-
-        item = w->item(i, 0);
-        if (item) {
-            item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        }
     }
 }
 
@@ -191,6 +217,36 @@ void PathWeightEditor::updateButtonClicked()
 void PathWeightEditor::slotCellChanged(int, int)
 {
    // mPrivate->commitData(ui->tableWidgetContent);
+}
+
+bool PathWeightEditor::hasEdge(int v1, int v2) const
+{
+    foreach (const Edge& edge, mPrivate->mEdges) {
+        if (edge.v1()==v1 && edge.v2()==v2)
+            return true;
+
+        if (edge.v1()==v2 && edge.v2()==v1)
+            return true;
+    }
+    return false;
+}
+
+void PathWeightEditor::createEdge(int v1, int v2)
+{
+    if (hasEdge(v1, v2))
+        return;
+
+    Node node1 = GetNodeEditor().getNode(v1);
+    Node node2 = GetNodeEditor().getNode(v2);
+
+    if (!node1.isValid() || !node2.isValid()) {
+        qDebug() << "Failed to create edge.";
+        return;
+    }
+
+    mPrivate->mEdges.append(Edge(v1, v2, 1.0f, 1.0f));
+
+    mPrivate->updateData(ui->tableWidgetContent, false);
 }
 
 QVector<float> PathWeightEditor::pathWeights() const

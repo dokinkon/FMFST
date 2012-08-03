@@ -20,6 +20,27 @@ public:
     ~GraphicsScene();
     void serialize();
     void clearHighlight();
+    void createNodeItem(const Node&, const QPoint&);
+    void destroyNodeItem(int nodeId);
+    void destroyNodes(const QVector<Node>& nodes);
+    /*!
+     *
+     */
+    void createConnectionItem();
+    /*!
+     *
+     */
+    void destroyConnectionItems();
+    /*!
+     *
+     */
+    QVector<Node> getSelectedNodes() const;
+    /*!
+     *
+     */
+    bool hasSelectedConnections() const;
+
+
     void highlightNode(const QString&);
     void highlightStartNode(const QString&);
     void highlightEdge(const QString&, const QString&);

@@ -56,6 +56,17 @@ bool FMFST::isMFST(const Graph& fst)
         }
     }
 
+    QList<Graph>::Iterator it = mFounds.begin();
+    while (it!=mFounds.end()) {
+        const Graph& tree = *it;
+        if (tree.contains(fst)) {
+            it = mFounds.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    /*
     foreach (const Graph& tree, mFounds) {
         if (tree.contains(fst)) {
             mFounds.removeAll(tree);
@@ -66,6 +77,7 @@ bool FMFST::isMFST(const Graph& fst)
             return true;
         }
     }
+    */
     return true;
 }
 
@@ -74,8 +86,6 @@ QSet<Edge> FMFST::getSpanningEdgesFromFST(const Graph& fst)
     //qDebug() << "FIND SPANNING EDGES:";
     //qDebug() << "FST:" << fst.toString();
     //qDebug() << "G:" << G.toString();
-
-
     QSet<Edge> edges;
     foreach (const Edge& e, G.edges()) {
         int v1 = e.v1();
@@ -110,11 +120,11 @@ void FMFST::findMFST(int nodeIndex, const QSet<QString>& fn, const QSet<int>& ne
 
 void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
 {
-    qDebug() << "-----------------------------------------------";
-    qDebug() << "findMFST:" << ++mIterations; 
-    dumpGraph(fst);
-    qDebug() << "FN:" << fn;
-    qDebug() << "-----------------------------------------------";
+    //qDebug() << "-----------------------------------------------";
+    //qDebug() << "findMFST:" << ++mIterations;
+    //dumpGraph(fst);
+    //qDebug() << "FN:" << fn;
+    //qDebug() << "-----------------------------------------------";
 
     if (fn.isEmpty() && necessaryNodes.isEmpty()) {
         if (isMFST(fst)) {

@@ -26,7 +26,9 @@ SOURCES +=  source/main.cpp\
             source/fmfstdialog.cpp \
             source/edge.cpp \
             source/graph.cpp \
-    source/resultdialog.cpp
+    source/resultdialog.cpp \
+    source/canvaswidget.cpp \
+    source/createnodedialog.cpp
 
 HEADERS  += source/mainwindow.h \
             source/tableeditor.h \
@@ -43,7 +45,9 @@ HEADERS  += source/mainwindow.h \
             source/fmfstdialog.h \
             source/edge.h \
             source/graph.h \
-    source/resultdialog.h
+    source/resultdialog.h \
+    source/canvaswidget.h \
+    source/createnodedialog.h
 
 FORMS    += form/mainwindow.ui \
             form/tableeditor.ui \
@@ -52,7 +56,8 @@ FORMS    += form/mainwindow.ui \
             form/pathweighteditor.ui \
             form/nodeeditor.ui \
             form/fmfstdialog.ui \
-    form/resultdialog.ui
+    form/resultdialog.ui \
+    source/createnodedialog.ui
 
 RESOURCES += \
     FMFST.qrc

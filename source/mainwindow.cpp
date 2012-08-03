@@ -5,6 +5,7 @@
 #include "nodeeditor.h"
 #include "fmfst.h"
 #include "fmfstdialog.h"
+#include "canvaswidget.h"
 #include "ui_mainwindow.h"
 #include "resultdialog.h"
 
@@ -29,9 +30,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->menuView->addAction(editor->toggleViewAction());
 
     // setup graphicview and graphicsscene...
-    QGraphicsView* view = new QGraphicsView(this);
-    view->setScene(new GraphicsScene);
-    setCentralWidget(view);
+    //QGraphicsView* view = new QGraphicsView(this);
+    //view->setScene(new GraphicsScene);
+
+    CanvasWidget* canvasWidget = new CanvasWidget(this);
+    setCentralWidget(canvasWidget);
     GetGraphicsScene().update();
 
     // connection actions

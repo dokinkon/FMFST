@@ -15,9 +15,13 @@ class NodeEditor : public QWidget
 public:
     explicit NodeEditor(QWidget *parent = 0);
     ~NodeEditor();
+    Node createNode(const QString& name, const QString& fa, const QString& pa);
+    void destroyNodes(const QVector<Node>& nodes);
     QVector<Node> nodes() const;
     bool hasProgram(const QString&) const;
     bool hasFile(const QString&) const;
+    Node getNode(int) const;
+
     QSet<int> getNecessaryNodes() const;
 
 protected:

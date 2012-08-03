@@ -23,6 +23,9 @@ struct ConnectionItem::Private
             return;
         }
 
+        if (!mT1 || !mT2)
+            return;
+
         QPointF p1 = mT1->pos();
         QPointF p2 = mT2->pos();
 
@@ -36,7 +39,11 @@ ConnectionItem::ConnectionItem(NodeItem* t1, NodeItem* t2, float length)
     mPrivate->mT1 = t1;
     mPrivate->mT2 = t2;
     mPrivate->mLength = length;
-    setPen(QPen(QColor(0, 0, 0)));
+    QPen pen(QColor(128, 128, 128, 128));
+    pen.setWidth(5);
+    //setPen(QPen(QColor(0, 0, 0)));
+    setPen(pen);
+    setFlags(QGraphicsItem::ItemIsSelectable);
 }
 
 void ConnectionItem::setLength(float length)
@@ -56,6 +63,9 @@ void ConnectionItem::setHighlightEnabled(bool enabled)
 
 void ConnectionItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* item, QWidget* widget)
 {
+    if (!mPrivate->mT1 || !mPrivate->mT2)
+        return;
+
     painter->save();
     if (mPrivate->mHighlightEnabled) {
         QPen pen(QColor(255, 0, 0));
@@ -63,7 +73,9 @@ void ConnectionItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* it
         setPen(pen);
 
     } else {
-        setPen(QPen(QColor(0, 0, 0)));
+        QPen pen(QColor(128, 128, 128, 128));
+        pen.setWidth(5);
+        setPen(pen);
     }
     QGraphicsLineItem::paint(painter, item, widget);
     painter->restore();
@@ -90,5 +102,4 @@ QString ConnectionItem::getNodeName2() const
         return QString();
 
     return mPrivate->mT2->getNode().getName();
-
 }

@@ -34,7 +34,7 @@ private:
     QList<Graph> mFounds;
     Graph G;
     QVector<Node> mNodeData;
-	int mIterations;
+    int mIterations;
 };
 
 

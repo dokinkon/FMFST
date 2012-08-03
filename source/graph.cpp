@@ -89,7 +89,7 @@ void Graph::insertEdge(int v1, int v2, float length)
 {
     insertNode(v1);
     insertNode(v2);
-    mEdges.insert(Edge(v1, v2, length));
+    mEdges.insert(Edge(v1, v2, length, 1));
 }
 
 void Graph::insertEdge(const Edge& e)

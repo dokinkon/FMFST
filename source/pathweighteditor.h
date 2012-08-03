@@ -8,6 +8,9 @@ namespace Ui {
 class PathWeightEditor;
 }
 
+/*!
+ * TODO: rename to edge manager
+ */
 class PathWeightEditor : public QWidget
 {
     Q_OBJECT
@@ -15,6 +18,16 @@ class PathWeightEditor : public QWidget
 public:
     explicit PathWeightEditor(QWidget *parent = 0);
     ~PathWeightEditor();
+    /*!
+     *
+     */
+    bool hasEdge(int, int) const;
+
+    /*!
+     *
+     */
+    void createEdge(int, int);
+
     QVector<float> pathWeights() const;
     
 private:

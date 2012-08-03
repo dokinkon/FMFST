@@ -8,7 +8,6 @@
 namespace {
 
 const static QString FileName = "scene.dat";
-const static int NodeCount = 13;
 GraphicsScene* SharedGraphicsScene = NULL;
 
 }
@@ -21,10 +20,11 @@ struct GraphicsScene::Private
     void update(QGraphicsScene*);
     NodeItem* X(int);
 
-    QVector<NodeItem*> mNodeItems;
-    QVector<ConnectionItem*> mConnectionItems;
+    QList<NodeItem*> mNodeItems;
+    QList<ConnectionItem*> mConnectionItems;
 
     NodeItem* findNodeItem(const QString&) const;
+    NodeItem* findNodeItem(int) const;
     ConnectionItem* findConnectionItem(const QString&, const QString&);
 };
 
@@ -36,6 +36,18 @@ ConnectionItem* GraphicsScene::Private::findConnectionItem(const QString& v1, co
             return connectionItem;
         }
     }
+    return NULL;
+}
+
+NodeItem* GraphicsScene::Private::findNodeItem(int nodeId) const
+{
+    foreach (NodeItem* item, mNodeItems) {
+        Node node = item->getNode();
+        if (node.getId()==nodeId) {
+            return item;
+        }
+    }
+
     return NULL;
 }
 
@@ -53,7 +65,11 @@ NodeItem* GraphicsScene::Private::findNodeItem(const QString& name) const
 
 NodeItem* GraphicsScene::Private::X(int idx)
 {
-    return mNodeItems[idx - 1];
+    if (idx<mNodeItems.size()) {
+        return mNodeItems.at(idx);
+    }
+    return NULL;
+    //return mNodeItems[idx - 1];
 }
 
 void GraphicsScene::Private::init(QGraphicsScene* s)
@@ -63,10 +79,9 @@ void GraphicsScene::Private::init(QGraphicsScene* s)
     s->setSceneRect(0, 0, 800, 600);
 
     QVector<Node> nodes = GetNodeEditor().nodes();
-    mNodeItems.resize(NodeCount);
-    for (int i=0;i<NodeCount;i++) {
+    for (int i=0;i<nodes.size();i++) {
         NodeItem* item = new NodeItem(nodes[i]);
-        mNodeItems[i] = item;
+        mNodeItems.append(item);
         s->addItem(item);
     }
 
@@ -180,10 +195,12 @@ bool GraphicsScene::Private::deserialize()
         QPointF pos;
         ds >> pos;
 
+        /*
         if (i<NodeCount) {
             mNodeItems[i]->setPos(pos);
             i++;
         }
+        */
     }
     f.close();
     qDebug() << "[GRAPHICS-SCENE]: deserialize scene.dat ok";
@@ -206,6 +223,78 @@ GraphicsScene::~GraphicsScene()
     SharedGraphicsScene = NULL;
 }
 
+QVector<Node> GraphicsScene::getSelectedNodes() const
+{
+    QVector<Node> nodes;
+    QList<QGraphicsItem*> items = QGraphicsScene::selectedItems();
+    foreach (QGraphicsItem* item, items) {
+        if (item->type()==GraphicsScene::NodeType) {
+            NodeItem* nodeItem = static_cast<NodeItem*>(item);
+            nodes.append(nodeItem->getNode());
+        }
+    }
+    return nodes;
+}
+
+bool GraphicsScene::hasSelectedConnections() const
+{
+    QList<QGraphicsItem*> items = QGraphicsScene::selectedItems();
+    foreach (QGraphicsItem* item, items) {
+        if (item->type()==GraphicsScene::ConnectionType) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GraphicsScene::createConnectionItem()
+{
+    QVector<Node> nodes = getSelectedNodes();
+    if (nodes.size()!=2)
+        return;
+
+    NodeItem* n0 = mPrivate->findNodeItem(nodes[0].getName());
+    NodeItem* n1 = mPrivate->findNodeItem(nodes[1].getName());
+
+    if (!n0 || !n1)
+        return;
+
+    ConnectionItem* connectionItem = new ConnectionItem(n0, n1);
+    addItem(connectionItem);
+    mPrivate->mConnectionItems.append(connectionItem);
+    update();
+}
+
+void GraphicsScene::destroyConnectionItems()
+{
+    QList<QGraphicsItem*> items = QGraphicsScene::selectedItems();
+    foreach (QGraphicsItem* item, items) {
+        if (item->type()!=GraphicsScene::ConnectionType)
+            continue;
+
+        ConnectionItem* connectionItem = static_cast<ConnectionItem*>(item);
+
+        QGraphicsScene::removeItem(connectionItem);
+        mPrivate->mConnectionItems.removeAll(connectionItem);
+        delete connectionItem;
+    }
+    update();
+}
+
+void GraphicsScene::destroyNodes(const QVector<Node>& nodes)
+{
+    foreach (const Node& node, nodes) {
+        NodeItem* nodeItem = mPrivate->findNodeItem(node.getName());
+        if (!nodeItem)
+            continue;
+
+        QGraphicsScene::removeItem(nodeItem);
+        mPrivate->mNodeItems.removeAll(nodeItem);
+        delete nodeItem;
+    }
+    update();
+}
+
 void GraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent * mouseEvent)
 {
     QGraphicsScene::mouseMoveEvent(mouseEvent);
@@ -223,6 +312,27 @@ void GraphicsScene::clearHighlight()
     }
 
     update();
+}
+
+void GraphicsScene::createNodeItem(const Node& node, const QPoint& location)
+{
+    NodeItem* item = new NodeItem(node);
+    item->setPos(location);
+    addItem(item);
+    mPrivate->mNodeItems.append(item);
+}
+
+void GraphicsScene::destroyNodeItem(int nodeId)
+{
+    NodeItem* item = mPrivate->findNodeItem(nodeId);
+    if (!item)
+        return;
+
+    // TODO : remove edge
+
+    removeItem(item);
+    mPrivate->mNodeItems.removeAll(item);
+    delete item;
 }
 
 void GraphicsScene::highlightNode(const QString& nodeName)

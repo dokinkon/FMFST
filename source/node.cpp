@@ -21,6 +21,11 @@ Node::Node(const Node& rhs)
 {
 }
 
+bool Node::isValid() const
+{
+    return mId >= 0;
+}
+
 bool Node::operator==(const Node& rhs) const
 {
     if (mId!=rhs.mId)

@@ -23,7 +23,7 @@ NodeItem::NodeItem(const Node& node)
     mPrivate->mHighlightMode = NodeItem::HighlightOff;
     setRect(-Radius/2, -Radius/2, Radius, Radius);
     setBrush(QBrush(QColor(245, 250, 251)));
-    setFlags(QGraphicsItem::ItemIsMovable);
+    setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
     setZValue(10);
 }
 
@@ -76,7 +76,7 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* item, QW
     painter->setPen(QColor(0, 0, 0));
 
     // Draw Name
-    QString name = QString("X%1:%2").arg(mPrivate->mNode.getId()+1).arg(mPrivate->mNode.getName());
+    QString name = QString("Name:%1").arg(mPrivate->mNode.getName());
     painter->drawText(QRectF(-Radius/2, -Radius/2, Radius, Radius/3), Qt::AlignCenter, name);
     // Draw FA
     painter->drawText(QRectF(-Radius/2, Radius/3-Radius/2, Radius, Radius/3), Qt::AlignCenter, mPrivate->mNode.getFA().join(","));

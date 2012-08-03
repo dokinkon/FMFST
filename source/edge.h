@@ -9,7 +9,7 @@ class Edge
 public:
     Edge();
 
-    Edge(int, int, float);
+    Edge(int, int, float, float);
 
     Edge(const Edge& other);
 
@@ -25,10 +25,19 @@ public:
 
     QString toString() const;
 
+    void setTimeWeight(float w);
+
+    void setReliability(float r);
+
+    float getTimeWeight() const;
+
+    float getReliability() const;
+
 private:
     int mV1;
     int mV2;
-    float mLength;
+    float mTimeWeight;
+    float mReliability;
 };
 
 inline uint qHash(const Edge &e)

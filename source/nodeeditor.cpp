@@ -2,15 +2,18 @@
 #include "node.h"
 #include "graphicsscene.h"
 #include "ui_nodeeditor.h"
+#include <cassert>
 
 namespace {
 
-const static int RowCount = 13;
 const static int ColName  = 1;
 const static int ColFA    = 2;
 const static int ColPA    = 3;
 
 NodeEditor* SharedInstance = NULL;
+
+static const int RoleNodeId = Qt::UserRole;
+
 
 }
 
@@ -18,26 +21,44 @@ NodeEditor* SharedInstance = NULL;
 struct NodeEditor::Private
 {
     void initContentWidget(QTableWidget*);
-    QVector<Node> mNodes;
+    QList<Node> mNodes;
 
     // from ui to data model
     void commitNodeData(QTableWidget*);
     // data model to ui
-    void updateNodeData(QTableWidget*);
+    void updateNodeData(QTableWidget*, bool needDeserialize = true);
     void resetNodeData();
     bool serialize();
     bool deserialize();
+    int generateId() const;
+
     QStringList parseFPA(const QString&);
     QString invParseFPA(const QStringList&);
     bool mSerializeEnabled;
 };
 
+int NodeEditor::Private::generateId() const
+{
+    int id = -1;
+
+    bool found;
+    do {
+        id++;
+        found = true;
+        foreach (const Node& node, mNodes) {
+            if (node.getId()==id) {
+                found = false;
+                break;
+            }
+        }
+    } while (!found);
+
+    return id;
+}
+
 void NodeEditor::Private::resetNodeData()
 {
-    mNodes.resize(RowCount);
-    for (int i=0;i<RowCount;i++) {
-        mNodes[i] = Node();
-    }
+    mNodes.clear();
 }
 
 QString NodeEditor::Private::invParseFPA(const QStringList& fpa)
@@ -94,63 +115,80 @@ QMap<QString, int> parsePA(const QString& s)
     return r;
 }
 
-void NodeEditor::Private::updateNodeData(QTableWidget* table)
+// from data model to ui
+void NodeEditor::Private::updateNodeData(QTableWidget* table, bool needDeserialize)
 {
     if (!table)
         return;
 
-    if (!deserialize())
-        return;
+    if (needDeserialize) {
+        if (!deserialize())
+            return;
+    }
 
-    foreach (const Node& node, mNodes) {
-        int row = node.getId();
+    table->clearContents();
+    table->setRowCount(mNodes.size());
 
-        if (row < 0)
-            continue;
+    for (int i=0;i<mNodes.size();++i) {
+        const Node& node = mNodes.at(i);
 
-        // Set Name
-        QTableWidgetItem* item = table->item(row, ColName);
-        if (item)
-            item->setText(node.getName());
+        // Set Necessary
+        QTableWidgetItem* item = table->item(i, 0);
+        if (!item) {
+            item = new QTableWidgetItem("");
+            table->setItem(i, 0, item);
+        }
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Unchecked);
+
+        // Set Name & Id...
+        item = table->item(i, ColName);
+        if (!item) {
+            item = new QTableWidgetItem(node.getName());
+            table->setItem(i, ColName, item);
+        }
+        item->setText(node.getName());
+        item->setData(RoleNodeId, node.getId());
 
         // Set FA
-        item = table->item(row, ColFA);
-        if (item)
-            item->setText(invParseFPA(node.getFA()));
+        item = table->item(i, ColFA);
+        if (!item) {
+            item = new QTableWidgetItem("");
+            table->setItem(i, ColFA, item);
+        }
+        item->setText(invParseFPA(node.getFA()));
 
         // Set PA
-        item = table->item(row, ColPA);
-        if (item) {
-            item->setText(invParsePA(node.getPA()));
+        item = table->item(i, ColPA);
+        if (!item) {
+            item = new QTableWidgetItem("");
+            table->setItem(i, ColPA, item);
         }
-
+        item->setText(invParsePA(node.getPA()));
     }
 
     qDebug() << "[NODE-EDITOR]: update node data ok";
-
 }
 
+// from ui to data model
 void NodeEditor::Private::commitNodeData(QTableWidget* table)
 {
     if (!table)
         return;
 
+    mNodes.clear();
+
     for (int row=0;row<table->rowCount();++row) {
 
-        Node& node = mNodes[row];
-        node.setId(row);
 
-        // Name
+        // Name & Id
         QTableWidgetItem* item = table->item(row, ColName);
-        if (item) {
-            QString name = item->text();
-            if (name.isEmpty()||name.isNull()) {
-                node.reset();
-            } else {
-                node.setName(item->text());
-                node.setId(row);
-            }
-        }
+        if (!item)
+            continue;
+
+        Node node;
+        node.setName(item->text());
+        node.setId(row);
 
         // FA
         item = table->item(row, ColFA);
@@ -163,6 +201,8 @@ void NodeEditor::Private::commitNodeData(QTableWidget* table)
         if (item) {
             node.setPA(parsePA(item->text()));
         }
+
+        mNodes.append(node);
     }
     serialize();
 
@@ -170,7 +210,7 @@ void NodeEditor::Private::commitNodeData(QTableWidget* table)
         return;
 
     for (int i=0;i<mNodes.size();++i) {
-        GetGraphicsScene().updateNodeData(i, mNodes[i]);
+        GetGraphicsScene().updateNodeData(i, mNodes.at(i));
     }
     GetGraphicsScene().update();
 }
@@ -188,9 +228,6 @@ bool NodeEditor::Private::serialize()
 
     QDataStream ds(&f);
     foreach (const Node& node, mNodes) {
-        if (node.getId() < 0)
-            continue;
-
         ds << node.getId();
         ds << node.getName();
         ds << node.getFA();
@@ -211,8 +248,7 @@ bool NodeEditor::Private::deserialize()
         return false;
     }
 
-    resetNodeData();
-    //mNodes.clear();
+    mNodes.clear();
 
     QDataStream ds(&f);
     while (!ds.atEnd()) {
@@ -223,14 +259,13 @@ bool NodeEditor::Private::deserialize()
         ds >> id >> name >> fa >> pa;
 
         pa.remove("");
-        qDebug() << pa;
+        Node node;
+        node.setId(id);
+        node.setName(name);
+        node.setFA(fa);
+        node.setPA(pa);
 
-        if (id>=0 && id<RowCount) {
-            mNodes[id].setId(id);
-            mNodes[id].setName(name);
-            mNodes[id].setFA(fa);
-            mNodes[id].setPA(pa);
-        }
+        mNodes.append(node);
     }
     qDebug() << "[NODE-EDITOR]: deserialize node.dat ok";
     return true;
@@ -240,14 +275,6 @@ void NodeEditor::Private::initContentWidget(QTableWidget* w)
 {
     if (!w)
         return;
-
-    for (int r=0;r<RowCount;r++) {
-        w->setItem(r, ColName, new QTableWidgetItem);
-        w->setItem(r, ColFA,   new QTableWidgetItem);
-        w->setItem(r, ColPA,   new QTableWidgetItem);
-    }
-
-    mNodes.resize(RowCount);
     updateNodeData(w);
 }
 
@@ -263,12 +290,6 @@ NodeEditor::NodeEditor(QWidget *parent) :
     mPrivate->initContentWidget(ui->tableWidgetContent);
     SharedInstance = this;
     mPrivate->mSerializeEnabled = true;
-
-    for (int i=0;i<RowCount;++i) {
-        QTableWidgetItem* item = ui->tableWidgetContent->item(i, 0);
-        item->setCheckState(Qt::Unchecked);
-    }
-
 }
 
 NodeEditor::~NodeEditor()
@@ -278,9 +299,46 @@ NodeEditor::~NodeEditor()
     SharedInstance = NULL;
 }
 
+Node NodeEditor::getNode(int nodeId) const
+{
+    foreach (const Node& node, mPrivate->mNodes) {
+        if (node.getId()==nodeId)
+            return node;
+    }
+    return Node();
+}
+
+Node NodeEditor::createNode(const QString& name, const QString& fa, const QString& pa)
+{
+    Node node;
+    node.setId(mPrivate->generateId());
+    node.setName(name);
+    node.setFA(mPrivate->parseFPA(fa));
+    node.setPA(parsePA(pa));
+    mPrivate->mNodes.append(node);
+    mPrivate->updateNodeData(ui->tableWidgetContent, false);
+    mPrivate->serialize();
+    return node;
+}
+
+void NodeEditor::destroyNodes(const QVector<Node>& nodes)
+{
+    foreach (const Node& node, nodes) {
+        QList<Node>::Iterator it = mPrivate->mNodes.begin();
+        while (it!=mPrivate->mNodes.end()) {
+            if (node.getId()==it->getId()) {
+                it = mPrivate->mNodes.erase(it);
+            } else {
+                it++;
+            }
+        }
+    }
+    mPrivate->updateNodeData(ui->tableWidgetContent, false);
+}
+
 QVector<Node> NodeEditor::nodes() const
 {
-    return mPrivate->mNodes;
+    return mPrivate->mNodes.toVector();
 }
 
 void NodeEditor::closeEvent(QCloseEvent* e)
@@ -319,10 +377,12 @@ QSet<int> NodeEditor::getNecessaryNodes() const
 {
     QSet<int> nodes;
 
-    for (int i=0;i<RowCount;++i) {
+    for (int i=0;i<ui->tableWidgetContent->rowCount();++i) {
         QTableWidgetItem* item = ui->tableWidgetContent->item(i, 0);
         if (item->checkState()==Qt::Checked) {
-            nodes.insert(i);
+            QTableWidgetItem* nameItem = ui->tableWidgetContent->item(i, 1);
+            assert(nameItem);
+            nodes.insert(nameItem->data(RoleNodeId).toInt());
         }
     }
     return nodes;

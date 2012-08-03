@@ -14,6 +14,8 @@ public:
     Node& operator=(const Node&);
     bool operator==(const Node&) const;
 
+    bool isValid() const;
+
     void connectTo(const Node&);
     void disconnectFrom(const Node&);
     bool hasConnections() const;

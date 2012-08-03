@@ -40,7 +40,7 @@
      <row/>
      <column>
       <property name="text">
-       <string>編號</string>
+       <string>必經點</string>
       </property>
      </column>
      <column>
