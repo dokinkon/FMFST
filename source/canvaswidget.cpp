@@ -2,6 +2,7 @@
 #include "graphicsscene.h"
 #include "createnodedialog.h"
 #include "nodeeditor.h"
+#include "edge.h"
 #include "pathweighteditor.h"
 
 #include <QtGui>
@@ -12,12 +13,48 @@ struct CanvasWidget::Private
 {
     GraphicsScene* mGraphicsScene;
     QAction* mCreateNodeAction;
-    QAction* mDestroyNodeAction;
     QPoint mLastLocation;
     QAction* mCreateConnectionAction;
-    QAction* mDestroyConnectionAction;
+
+    void deleteSelectedItems();
+    void deleteSelectedNodes(const QVector<Node>& nodes);
+    void deleteSelectedEdges(const QVector<Edge>& edges);
 };
 
+void CanvasWidget::Private::deleteSelectedEdges(const QVector<Edge>& edges)
+{
+    foreach (const Edge& edge, edges) {
+        GetPathWeightEditor().destroyConnection(edge.v1(), edge.v2());
+        GetGraphicsScene().destroyConnectionItem(edge.v1(), edge.v2());
+    }
+    mGraphicsScene->update();
+}
+
+void CanvasWidget::Private::deleteSelectedNodes(const QVector<Node>& nodes)
+{
+    foreach (const Node& node, nodes) {
+        GetPathWeightEditor().destroyConnectionRefToNode(node.getId());
+        GetGraphicsScene().destroyConnectionItemsRefToNode(node.getId());
+    }
+    GetNodeEditor().destroyNodes(nodes);
+    mGraphicsScene->destroyNodes(nodes);
+    mGraphicsScene->update();
+}
+
+void CanvasWidget::Private::deleteSelectedItems()
+{
+    QVector<Edge> edges = mGraphicsScene->getSelectedEdges();
+
+    // Delete selected nodes
+    QVector<Node> nodes = mGraphicsScene->getSelectedNodes();
+    if (!nodes.isEmpty()) {
+        deleteSelectedNodes(nodes);
+    }
+
+    if (!edges.isEmpty()) {
+        deleteSelectedEdges(edges);
+    }
+}
 
 CanvasWidget::CanvasWidget(QWidget *parent) :
     QGraphicsView(parent)
@@ -25,14 +62,10 @@ CanvasWidget::CanvasWidget(QWidget *parent) :
 {
     mPrivate->mGraphicsScene = new GraphicsScene;
     mPrivate->mCreateNodeAction = new QAction("Create Node", this);
-    mPrivate->mDestroyNodeAction = new QAction("Destroy Nodes", this);
     mPrivate->mCreateConnectionAction = new QAction("Create Connection", this);
-    mPrivate->mDestroyConnectionAction = new QAction("Destroy Connections", this);
 
     connect(mPrivate->mCreateNodeAction, SIGNAL(triggered()), this, SLOT(slotCreateNode()));
-    connect(mPrivate->mDestroyNodeAction, SIGNAL(triggered()), this, SLOT(slotDestroyNodes()));
     connect(mPrivate->mCreateConnectionAction, SIGNAL(triggered()), this, SLOT(slotCreateConnection()));
-    connect(mPrivate->mDestroyConnectionAction, SIGNAL(triggered()), this, SLOT(slotDestroyConnections()));
     QGraphicsView::setScene(mPrivate->mGraphicsScene);
 }
 
@@ -49,6 +82,7 @@ void CanvasWidget::slotCreateNode()
     }
 }
 
+/*
 void CanvasWidget::slotDestroyNodes()
 {
     QVector<Node> nodes = mPrivate->mGraphicsScene->getSelectedNodes();
@@ -66,6 +100,7 @@ void CanvasWidget::slotDestroyNodes()
         // TODO
     }
 }
+*/
 
 void CanvasWidget::slotCreateConnection()
 {
@@ -84,6 +119,7 @@ void CanvasWidget::slotCreateConnection()
     GetPathWeightEditor().createEdge(nodes[0].getId(), nodes[1].getId());
 }
 
+/*
 void CanvasWidget::slotDestroyConnections()
 {
     if (!mPrivate->mGraphicsScene->hasSelectedConnections())
@@ -95,6 +131,7 @@ void CanvasWidget::slotDestroyConnections()
 
     mPrivate->mGraphicsScene->destroyConnectionItems();
 }
+*/
 
 CanvasWidget::~CanvasWidget()
 {
@@ -106,9 +143,7 @@ void CanvasWidget::contextMenuEvent(QContextMenuEvent *event)
     mPrivate->mLastLocation = event->pos();
     QMenu menu(this);
     menu.addAction(mPrivate->mCreateNodeAction);
-    //menu.addAction(mPrivate->mDestroyNodeAction);
     menu.addAction(mPrivate->mCreateConnectionAction);
-    //menu.addAction(mPrivate->mDestroyConnectionAction);
     menu.exec(event->globalPos());
 }
 
@@ -120,6 +155,7 @@ void CanvasWidget::keyReleaseEvent(QKeyEvent* event)
         if (mPrivate->mGraphicsScene->selectedItems().size()>0) {
             int r = QMessageBox::question(this, "Are you sure", "Are you sure delete selected items?", QMessageBox::Yes, QMessageBox::No);
             if (QMessageBox::Yes==r) {
+                mPrivate->deleteSelectedItems();
                 // TODO
             }
         }

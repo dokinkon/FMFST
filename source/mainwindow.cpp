@@ -29,10 +29,6 @@ MainWindow::MainWindow(QWidget *parent) :
     addDockWidget(Qt::LeftDockWidgetArea, editor);
     ui->menuView->addAction(editor->toggleViewAction());
 
-    // setup graphicview and graphicsscene...
-    //QGraphicsView* view = new QGraphicsView(this);
-    //view->setScene(new GraphicsScene);
-
     CanvasWidget* canvasWidget = new CanvasWidget(this);
     setCentralWidget(canvasWidget);
     GetGraphicsScene().update();
@@ -44,6 +40,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QSettings settings;
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
+
+    GetNodeEditor().initialize();
+    GetPathWeightEditor().initialize();
+    GetGraphicsScene().initialize();
 }
 
 MainWindow::~MainWindow()
@@ -54,6 +54,7 @@ MainWindow::~MainWindow()
 void MainWindow::closeEvent(QCloseEvent *e)
 {
     GetGraphicsScene().serialize();
+    GetPathWeightEditor().serialize();
 
     // save window geometry
     QSettings settings;
@@ -110,8 +111,6 @@ void MainWindow::slotFindMSPT()
             ++it;
         }
     }
-
-
 
     foreach (int nodeIndex, necessaryNodes) {
         Node& node = nodes[nodeIndex];

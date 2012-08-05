@@ -3,42 +3,26 @@
 #include "pathweighteditor.h"
 #include "nodeeditor.h"
 #include "graphicsscene.h"
+#include <cassert>
 
-namespace {
-// The Path Weight Sequence Is:
-// 0:  X1,  X2
-// 1:  X1,  X12
-// 2:  X2,  X3
-// 3:  X3,  X4
-// 4:  X4,  X5
-// 5:  X5,  X6
-// 6:  X6,  X7
-// 7:  X7,  X8
-// 8:  X5,  X10
-// 9:  X9,  X10
-// 10: X8,  X9
-// 11: X9,  X11
-// 12: X11, X12
-// 13: X12, X13
-static const int edgeMap[][2] = {
-    {0, 1},
-    {0, 11},
-    {1, 2},
-    {2, 3},
-    {3, 4},
-    {4, 5},
-    {5, 6},
-    {6, 7},
-    {4, 9},
-    {8, 9},
-    {7, 8},
-    {8, 10},
-    {10, 11},
-    {11, 12},
-    {3, 11}
+
+struct FMFST::Private
+{
+    QVector<Node> mNodes;
+    Node findNode(int nodeId);
 };
 
+
+Node FMFST::Private::findNode(int nodeId)
+{
+    foreach (const Node& node, mNodes) {
+        if (node.getId()==nodeId) {
+            return node;
+        }
+    }
+    return Node();
 }
+
 
 bool FMFST::isMFST(const Graph& fst)
 {
@@ -65,19 +49,6 @@ bool FMFST::isMFST(const Graph& fst)
             ++it;
         }
     }
-
-    /*
-    foreach (const Graph& tree, mFounds) {
-        if (tree.contains(fst)) {
-            mFounds.removeAll(tree);
-            qDebug() << "=======================";
-            qDebug() << "IS MFST:";
-            dumpGraph(fst);
-            qDebug() << "=======================";
-            return true;
-        }
-    }
-    */
     return true;
 }
 
@@ -103,7 +74,7 @@ QSet<Edge> FMFST::getSpanningEdgesFromFST(const Graph& fst)
 QSet<int> FMFST::findNodesWithProgram(const QString& program)
 {
     QSet<int> nodes;
-    foreach (const Node& n, mNodeData) {
+    foreach (const Node& n, mPrivate->mNodes) {
         if (n.getPA().contains(program)) {
             nodes.insert(n.getId());
         }
@@ -163,10 +134,13 @@ void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn, const QSet<int>&
         extendFST.insertNode(y);
         extendFST.insertEdge(a);
 
-        QSet<QString> newFn = fn;
-        newFn -= mNodeData[y].getFA().toSet();
+        Node node = mPrivate->findNode(y);
+        assert(node.isValid());
 
-        qDebug() << "FA on node X" << y + 1 << " are" << mNodeData[y].getFA().toSet();
+        QSet<QString> newFn = fn;
+        newFn -= node.getFA().toSet();
+
+        qDebug() << "FA on node X" << y + 1 << " are" << node.getFA().toSet();
 
         // update necessayNodes
         QSet<int> nn = necessaryNodes;
@@ -186,15 +160,21 @@ void FMFST::dumpGraph(const Graph& g)
     QSet<int> nodes = g.nodes();
     qDebug() << "GRAPH\n";
     qDebug() << "V = {";
-    foreach (int node, nodes) {
-        qDebug() << mNodeData[node].getName();
+    foreach (int nodeId, nodes) {
+        Node node = mPrivate->findNode(nodeId);
+        assert(node.isValid());
+        qDebug() << node.getName();
     }
     qDebug() << "}\n";
 
     QSet<Edge> edges = g.edges();
     qDebug() << "E = {";
     foreach (const Edge& edge, edges) {
-        qDebug() << mNodeData[edge.v1()].getName() << ", " << mNodeData[edge.v2()].getName();
+        Node node1 = mPrivate->findNode(edge.v1());
+        Node node2 = mPrivate->findNode(edge.v2());
+        assert(node1.isValid());
+        assert(node2.isValid());
+        qDebug() << node1.getName() << ", " << node2.getName();
     }
     qDebug() << "}\n";
 }
@@ -203,7 +183,9 @@ float FMFST::getMinimumEdgeLength(const QString& program, const Graph& g)
 {
     foreach (int n, findNodesWithProgram(program)) {
         if (g.containsNode(n)) {
-            int familiar = mNodeData[n].getPA()[program];
+            Node node = mPrivate->findNode(n);
+            assert(node.isValid());
+            int familiar = node.getPA()[program];
             return (float)g.getTotalEdgeLength() / familiar;
         }
     }
@@ -262,6 +244,19 @@ static QString FormatResult(const QList<Graph>& trees, const QVector<Node>& node
 
 QString FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
 {
+    // clear previous data
+    mDCSGraph.clear();
+    mFounds.clear();
+
+    // make a clean copy node data from node editor
+    mPrivate->mNodes = GetNodeEditor().nodes();
+
+    // construct dcs graph
+    QVector<Edge> edges = GetPathWeightEditor().getEdges();
+    foreach (const Edge& edge, edges) {
+        mDCSGraph.insertEdge(edge);
+    }
+
     G = mDCSGraph;
     //qDebug() << "--------------------------------------------------";
     //qDebug() << "RUN!";
@@ -275,12 +270,14 @@ QString FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<i
     // 1. Get nodes that contain the program P
     QSet<int> starts = findNodesWithProgram(program);
     //qDebug() << "INIT NODES:" << nodes;
-    foreach (int node, starts) {
-        QSet<QString> fa = mNodeData[node].getFA().toSet();
+    foreach (int nodeId, starts) {
+        Node node = mPrivate->findNode(nodeId);
+        assert(node.isValid());
+        QSet<QString> fa = node.getFA().toSet();
         QSet<QString> newFn = fn;
-        findMFST(node, newFn.subtract(fa), necessaryNodes);
-        G.removeNode(node);
-        qDebug() << "REMOVE NODE X" << node;
+        findMFST(node.getId(), newFn.subtract(fa), necessaryNodes);
+        G.removeNode(node.getId());
+        qDebug() << "REMOVE NODE X" << node.getId();
     }
 
     qDebug() << "RESULTS:";
@@ -300,36 +297,30 @@ QString FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<i
     }
     // Update The Solution To GraphicsScene
     GetGraphicsScene().clearHighlight();
-    foreach (int node, solution.nodes()) {
-        GetGraphicsScene().highlightNode(mNodeData[node].getName());
+    foreach (int nodeId, solution.nodes()) {
+        GetGraphicsScene().highlightNode(nodeId);
     }
     foreach (const Edge& edge, solution.edges()) {
-        GetGraphicsScene().highlightEdge(mNodeData[edge.v1()].getName(), mNodeData[edge.v2()].getName());
+        GetGraphicsScene().highlightEdge(edge);
     }
     GetGraphicsScene().update();
 
-    return FormatResult(mFounds, mNodeData, starts, necessaryNodes);
+    return FormatResult(mFounds, mPrivate->mNodes, starts, necessaryNodes);
 }
 
-//---------------------------------------------
-// The Path Weight Sequence Is:
-// 0:  X1,  X2
-// 1:  X1,  X12
-// 2:  X2,  X3
-// 3:  X3,  X4
-// 4:  X4,  X5
-// 5:  X5,  X6
-// 6:  X6,  X7
-// 7:  X7,  X8
-// 8:  X5,  X10
-// 9:  X9,  X10
-// 10: X8,  X9
-// 11: X9,  X11
-// 12: X11, X12
-// 13: X12, X13
+FMFST::FMFST()
+    : mPrivate(new Private)
+{
+}
+
+FMFST::~FMFST()
+{
+    delete mPrivate;
+}
+// DEPREACATED
 void FMFST::init(const QVector<Node>& nodeData)
 {
-    mNodeData = nodeData;
+    /*
     mDCSGraph.clear();
     mFounds.clear();
     QVector<float> lengths = GetPathWeightEditor().pathWeights();
@@ -340,6 +331,7 @@ void FMFST::init(const QVector<Node>& nodeData)
     }
 
     G = mDCSGraph;
+    */
 }
 
 

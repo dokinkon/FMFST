@@ -9,12 +9,20 @@
 class FMFST
 {
 public:
+    FMFST();
+    ~FMFST();
+    /*!
+     * DEPRECATED
+     */
     void init(const QVector<Node>& nodeData);
     /*!
      *
      */
     QString run(const QString& program, const QSet<QString>& fileSet, const QSet<int>& necessaryNodes);
 private:
+
+    struct Private;
+    Private* mPrivate;
 
     void findMFST(int, const QSet<QString>&, const QSet<int>& necessaryNodes);
 
@@ -33,7 +41,6 @@ private:
     Graph mDCSGraph;
     QList<Graph> mFounds;
     Graph G;
-    QVector<Node> mNodeData;
     int mIterations;
 };
 

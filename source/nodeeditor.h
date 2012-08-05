@@ -15,6 +15,7 @@ class NodeEditor : public QWidget
 public:
     explicit NodeEditor(QWidget *parent = 0);
     ~NodeEditor();
+    void initialize();
     Node createNode(const QString& name, const QString& fa, const QString& pa);
     void destroyNodes(const QVector<Node>& nodes);
     QVector<Node> nodes() const;
@@ -33,7 +34,6 @@ private:
     Private* mPrivate;
 private slots:
     void updateButtonClicked();
-    void slotCellChanged(int row, int col);
 };
 
 NodeEditor& GetNodeEditor();

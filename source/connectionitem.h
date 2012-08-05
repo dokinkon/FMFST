@@ -23,6 +23,8 @@ public:
     void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget* widget = 0);
     QString getNodeName1() const;
     QString getNodeName2() const;
+    int getNode1Id() const;
+    int getNode2Id() const;
 private:
     struct Private;
     Private* mPrivate;

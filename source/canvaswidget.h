@@ -17,9 +17,7 @@ signals:
     
 private slots:
     void slotCreateNode();
-    void slotDestroyNodes();
     void slotCreateConnection();
-    void slotDestroyConnections();
 
 private:
     struct Private;

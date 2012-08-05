@@ -61,6 +61,17 @@ bool Edge::operator==(const Edge& rhs) const
     return false;
 }
 
+bool Edge::isEqualTo(int node1Id, int node2Id) const
+{
+    if (mV1==node1Id && mV2==node2Id)
+        return true;
+
+    if (mV1==node2Id && mV2==node1Id)
+        return true;
+
+    return false;
+}
+
 QString Edge::toString() const
 {
     return QString();

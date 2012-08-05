@@ -13,6 +13,8 @@ public:
 
     Edge(const Edge& other);
 
+    bool isEqualTo(int node1Id, int node2Id) const;
+
     int v1() const;
 
     int v2() const;

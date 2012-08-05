@@ -103,3 +103,36 @@ QString ConnectionItem::getNodeName2() const
 
     return mPrivate->mT2->getNode().getName();
 }
+
+int ConnectionItem::getNode1Id() const
+{
+    if (!mPrivate->mT1)
+        return -1;
+    return mPrivate->mT1->getNode().getId();
+}
+
+int ConnectionItem::getNode2Id() const
+{
+    if (!mPrivate->mT2)
+        return -1;
+    return mPrivate->mT2->getNode().getId();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

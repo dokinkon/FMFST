@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+CONFIG -= x86_64
 
 TARGET = FMFST
 TEMPLATE = app

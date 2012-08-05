@@ -1,6 +1,7 @@
 #include "nodeeditor.h"
 #include "node.h"
 #include "graphicsscene.h"
+#include "pathweighteditor.h"
 #include "ui_nodeeditor.h"
 #include <cassert>
 
@@ -180,7 +181,6 @@ void NodeEditor::Private::commitNodeData(QTableWidget* table)
 
     for (int row=0;row<table->rowCount();++row) {
 
-
         // Name & Id
         QTableWidgetItem* item = table->item(row, ColName);
         if (!item)
@@ -208,11 +208,6 @@ void NodeEditor::Private::commitNodeData(QTableWidget* table)
 
     if (!GetGraphicsScenePtr())
         return;
-
-    for (int i=0;i<mNodes.size();++i) {
-        GetGraphicsScene().updateNodeData(i, mNodes.at(i));
-    }
-    GetGraphicsScene().update();
 }
 
 bool NodeEditor::Private::serialize()
@@ -286,8 +281,6 @@ NodeEditor::NodeEditor(QWidget *parent) :
     mPrivate->mSerializeEnabled = false;
     ui->setupUi(this);
     connect(ui->pushButtonUpdate, SIGNAL(clicked()), this, SLOT(updateButtonClicked()));
-    connect(ui->tableWidgetContent, SIGNAL(cellChanged(int,int)), this, SLOT(slotCellChanged(int,int)));
-    mPrivate->initContentWidget(ui->tableWidgetContent);
     SharedInstance = this;
     mPrivate->mSerializeEnabled = true;
 }
@@ -297,6 +290,11 @@ NodeEditor::~NodeEditor()
     delete ui;
     delete mPrivate;
     SharedInstance = NULL;
+}
+
+void NodeEditor::initialize()
+{
+    mPrivate->initContentWidget(ui->tableWidgetContent);
 }
 
 Node NodeEditor::getNode(int nodeId) const
@@ -350,6 +348,9 @@ void NodeEditor::closeEvent(QCloseEvent* e)
 void NodeEditor::updateButtonClicked()
 {
     mPrivate->commitNodeData(ui->tableWidgetContent);
+    GetPathWeightEditor().updateNodeData();
+    GetGraphicsScene().updateNodeData();
+    GetGraphicsScene().update();
 }
 
 bool NodeEditor::hasProgram(const QString& program) const
@@ -386,13 +387,6 @@ QSet<int> NodeEditor::getNecessaryNodes() const
         }
     }
     return nodes;
-}
-
-void NodeEditor::slotCellChanged(int row, int col)
-{
-    //qDebug() << "cell changed" << row << ", " << col;
-    //if (mPrivate->mNodes.size()==RowCount)
-        //mPrivate->commitNodeData(ui->tableWidgetContent);
 }
 
 NodeEditor& GetNodeEditor()

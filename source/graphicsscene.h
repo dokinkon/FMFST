@@ -5,6 +5,7 @@
 #include <QGraphicsItem>
 
 class Node;
+class Edge;
 
 class GraphicsScene : public QGraphicsScene
 {
@@ -18,11 +19,19 @@ public:
 
     explicit GraphicsScene(QObject *parent = 0);
     ~GraphicsScene();
+    /*!
+     * must be called after nodeeditor and edgeeditor initialized
+     */
+    void initialize();
     void serialize();
     void clearHighlight();
     void createNodeItem(const Node&, const QPoint&);
     void destroyNodeItem(int nodeId);
     void destroyNodes(const QVector<Node>& nodes);
+    /*!
+     *
+     */
+    void syncAndUpdate();
     /*!
      *
      */
@@ -34,17 +43,29 @@ public:
     /*!
      *
      */
+    void destroyConnectionItem(int, int);
+    /*!
+     *
+     */
+    void destroyConnectionItemsRefToNode(int nodeId);
+    /*!
+     *
+     */
     QVector<Node> getSelectedNodes() const;
+    /*!
+     *
+     */
+    QVector<Edge> getSelectedEdges() const;
     /*!
      *
      */
     bool hasSelectedConnections() const;
 
 
-    void highlightNode(const QString&);
-    void highlightStartNode(const QString&);
-    void highlightEdge(const QString&, const QString&);
-    void updateNodeData(int index, const Node&);
+    void highlightNode(int nodeId);
+    void highlightStartNode(int nodeId);
+    void highlightEdge(const Edge&);
+    void updateNodeData();
     void updateEdgeWeight(int index1, int index2, float weight);
 
 protected:

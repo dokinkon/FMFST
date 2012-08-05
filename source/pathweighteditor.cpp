@@ -11,32 +11,13 @@
 
 namespace {
 
-const static int RowCount = 15;
-const static QString FileName = "weight.dat";
+const static QString FileName = "edges.dat";
 const static int TimeWeightCol = 1;
 const static int PathRelCol    = 2;
 
 
 static const int RoleNode1 = Qt::UserRole + 1;
 static const int RoleNode2 = Qt::UserRole + 2;
-
-static const int edgeMap[][2] = {
-    {0, 1},
-    {0, 11},
-    {1, 2},
-    {2, 3},
-    {3, 4},
-    {4, 5},
-    {5, 6},
-    {6, 7},
-    {4, 9},
-    {8, 9},
-    {7, 8},
-    {8, 10},
-    {10, 11},
-    {11, 12},
-    {3, 11},
-};
 
 static PathWeightEditor* sharedInstance = NULL;
 
@@ -55,36 +36,38 @@ struct PathWeightEditor::Private
     bool serialize();
     bool deserialize();
 
-    int mTimeWeights[RowCount];
-    float mReliabilities[RowCount];
-
     QList<Edge> mEdges;
-
-
-
-
-
 
     bool mSerializeEnabled;
 };
 
+// from ui to data model
 void PathWeightEditor::Private::commitData(QTableWidget* w)
 {
     if (!w)
         return;
 
-    resetContentData();
+    mEdges.clear();
 
-    for (int i=0;i<RowCount;i++) {
+    for (int i=0;i<w->rowCount();i++) {
+        float timeWeight = 1.0f;
+        float reliability = 1.0f;
         QTableWidgetItem* item = w->item(i, TimeWeightCol);
         if (item) {
-            mTimeWeights[i] = item->text().toInt();
+            timeWeight = item->text().toFloat();
         }
 
         item = w->item(i, PathRelCol);
         if (item) {
-            mReliabilities[i] = item->text().toFloat();
+            reliability = item->text().toFloat();
         }
+
+        // get name item
+        item = w->item(i, 0);
+        int node1Id = item->data(RoleNode1).toInt();
+        int node2Id = item->data(RoleNode2).toInt();
+
+        mEdges.append(Edge(node1Id, node2Id, timeWeight, reliability));
     }
 
     serialize();
@@ -93,11 +76,7 @@ void PathWeightEditor::Private::commitData(QTableWidget* w)
     if (!GetGraphicsScenePtr())
         return;
 
-    for (int i=0;i<RowCount;i++) {
-        float weight = mTimeWeights[i] / mReliabilities[i];
-        GetGraphicsScene().updateEdgeWeight(edgeMap[i][0], edgeMap[i][1], weight);
-    }
-    GetGraphicsScene().update();
+    GetGraphicsScene().syncAndUpdate();
 }
 
 void PathWeightEditor::Private::updateData(QTableWidget* w, bool needDeserialize)
@@ -123,6 +102,8 @@ void PathWeightEditor::Private::updateData(QTableWidget* w, bool needDeserialize
         // create name item
         QString name = QString("%1, %2").arg(node1.getName()).arg(node2.getName());
         QTableWidgetItem* item = new QTableWidgetItem(name);
+        item->setData(RoleNode1, node1.getId());
+        item->setData(RoleNode2, node2.getId());
         item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         w->setItem(i, 0, item);
 
@@ -137,17 +118,22 @@ void PathWeightEditor::Private::updateData(QTableWidget* w, bool needDeserialize
 
 bool PathWeightEditor::Private::serialize()
 {
-    if (!mSerializeEnabled)
+    if (!mSerializeEnabled) {
+        qDebug() << "[WARNING][EDGE-EDITOR]:Failed to serialize";
         return false;
+    }
 
     QFile f(FileName);
     if (!f.open(QIODevice::WriteOnly))
         return false;
 
     QDataStream ds(&f);
-    for (int i=0;i<RowCount;++i) {
-        ds << mTimeWeights[i] << mReliabilities[i];
+
+    foreach (const Edge& edge, mEdges) {
+        ds << edge.v1() << edge.v2() << edge.getTimeWeight() << edge.getReliability();
     }
+
+    qDebug() << "[EDGE-EDITOR]:serialize ok (" << mEdges.size() << ")";
 
     f.close();
     return true;
@@ -159,25 +145,23 @@ bool PathWeightEditor::Private::deserialize()
     if (!f.open(QIODevice::ReadOnly))
         return false;
 
-    resetContentData();
+    mEdges.clear();
 
     QDataStream ds(&f);
-    int i = 0;
     while (!ds.atEnd()) {
-        ds >> mTimeWeights[i];
-        ds >> mReliabilities[i];
-        ++i;
+        int node1Id, node2Id;
+        float timeWeight, reliability;
+        ds >> node1Id >> node2Id >> timeWeight >> reliability;
+        mEdges.append(Edge(node1Id, node2Id, timeWeight, reliability));
     }
     f.close();
+    qDebug() << "[EDGE-MANAGER]: deserialize ok (" << mEdges.size() << ")";
     return true;
 }
 
 void PathWeightEditor::Private::resetContentData()
 {
-    for (int i=0;i<RowCount;++i) {
-        mTimeWeights[i] = 0;
-        mReliabilities[i] = 0.0f;
-    }
+    mEdges.clear();
 }
 
 void PathWeightEditor::Private::initContentWidget(QTableWidget *w)
@@ -195,9 +179,6 @@ PathWeightEditor::PathWeightEditor(QWidget *parent) :
     mPrivate->mSerializeEnabled = false;
     ui->setupUi(this);
     connect(ui->pushButtonUpdate, SIGNAL(clicked()), this, SLOT(updateButtonClicked()));
-    connect(ui->tableWidgetContent, SIGNAL(cellChanged(int,int)), this, SLOT(slotCellChanged(int,int)));
-
-    mPrivate->initContentWidget(ui->tableWidgetContent);
     sharedInstance = this;
     mPrivate->mSerializeEnabled = true;
 }
@@ -209,14 +190,14 @@ PathWeightEditor::~PathWeightEditor()
     sharedInstance = NULL;
 }
 
+void PathWeightEditor::initialize()
+{
+    mPrivate->initContentWidget(ui->tableWidgetContent);
+}
+
 void PathWeightEditor::updateButtonClicked()
 {
     mPrivate->commitData(ui->tableWidgetContent);
-}
-
-void PathWeightEditor::slotCellChanged(int, int)
-{
-   // mPrivate->commitData(ui->tableWidgetContent);
 }
 
 bool PathWeightEditor::hasEdge(int v1, int v2) const
@@ -229,6 +210,36 @@ bool PathWeightEditor::hasEdge(int v1, int v2) const
             return true;
     }
     return false;
+}
+
+void PathWeightEditor::destroyConnection(int node1Id, int node2Id)
+{
+    QList<Edge>::Iterator it = mPrivate->mEdges.begin();
+    while (it!=mPrivate->mEdges.end()) {
+        const Edge& edge = *it;
+        if (edge.v1()==node1Id && edge.v2()==node2Id) {
+            it = mPrivate->mEdges.erase(it);
+        } else if (edge.v1()==node2Id && edge.v2()==node1Id) {
+            it = mPrivate->mEdges.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    mPrivate->updateData(ui->tableWidgetContent, false);
+
+}
+void PathWeightEditor::destroyConnectionRefToNode(int nodeId)
+{
+    QList<Edge>::Iterator it = mPrivate->mEdges.begin();
+    while (it!=mPrivate->mEdges.end()) {
+        const Edge& edge = *it;
+        if (edge.v1()==nodeId || edge.v2()==nodeId) {
+            it = mPrivate->mEdges.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    mPrivate->updateData(ui->tableWidgetContent, false);
 }
 
 void PathWeightEditor::createEdge(int v1, int v2)
@@ -245,20 +256,40 @@ void PathWeightEditor::createEdge(int v1, int v2)
     }
 
     mPrivate->mEdges.append(Edge(v1, v2, 1.0f, 1.0f));
-
     mPrivate->updateData(ui->tableWidgetContent, false);
+}
+
+QVector<Edge> PathWeightEditor::getEdges() const
+{
+    return mPrivate->mEdges.toVector();
 }
 
 QVector<float> PathWeightEditor::pathWeights() const
 {
     QVector<float> weights;
-    weights.resize(RowCount);
 
-    for (int i=0;i<RowCount;i++) {
-        weights[i] = (float)mPrivate->mTimeWeights[i] / mPrivate->mReliabilities[i];
+
+    foreach (const Edge& edge, mPrivate->mEdges) {
+        weights.append(edge.length());
     }
 
     return weights;
+}
+
+void PathWeightEditor::updateNodeData()
+{
+    mPrivate->updateData(ui->tableWidgetContent, false);
+}
+
+void PathWeightEditor::serialize()
+{
+    mPrivate->serialize();
+}
+
+void PathWeightEditor::closeEvent(QCloseEvent* e)
+{
+    mPrivate->serialize();
+    QWidget::closeEvent(e);
 }
 
 PathWeightEditor& GetPathWeightEditor()
