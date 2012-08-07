@@ -4,6 +4,7 @@
 #include "connectionitem.h"
 #include "nodeeditor.h"
 #include "pathweighteditor.h"
+#include "mapwidget.h"
 #include <QtCore>
 #include <QtGui>
 
@@ -20,6 +21,9 @@ struct GraphicsScene::Private
     bool serialize(QGraphicsScene*);
     bool deserialize(QGraphicsScene*);
     void update(QGraphicsScene*);
+
+    MapWidget* mMapWidget;
+    QGraphicsProxyWidget* mMapProxyWidget;
 
     NodeItem* findNodeItem(QGraphicsScene*, int nodeId) const;
     ConnectionItem* findConnectionItem(QGraphicsScene*, const Edge& edge);
@@ -95,7 +99,8 @@ void GraphicsScene::Private::update(QGraphicsScene* scene)
 
     QRectF rectF(0, 0, 800, 600);
     foreach (QGraphicsItem* item, scene->items()) {
-        rectF = rectF.united(item->boundingRect());
+        if (item->type()==GraphicsScene::NodeType)
+            rectF = rectF.united(item->boundingRect());
         if (item->type()!=ConnectionType)
             continue;
 
@@ -105,6 +110,11 @@ void GraphicsScene::Private::update(QGraphicsScene* scene)
 
     rectF.adjust(-100, -100, 100, 100);
     scene->setSceneRect(rectF);
+    QSizeF s = rectF.size();
+    mMapWidget->setSize(QSize(s.width(), s.height()));
+    //mMapProxyWidget->setGeometry(QRectF(0, 0, s.width(), s.height()));
+    mMapProxyWidget->setGeometry(rectF);
+    //mMapWidget->resize(s.width()-30, s.height()-30);
     scene->update();
 }
 
@@ -157,6 +167,8 @@ GraphicsScene::GraphicsScene(QObject *parent) :
     QGraphicsScene(parent),
     mPrivate(new Private)
 {
+    mPrivate->mMapWidget = new MapWidget;
+    mPrivate->mMapProxyWidget = addWidget(mPrivate->mMapWidget);
     mPrivate->init(this);
     SharedGraphicsScene = this;
     mPrivate->update(this);

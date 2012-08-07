@@ -22,7 +22,7 @@ NodeItem::NodeItem(const Node& node)
     mPrivate->mNode = node;
     mPrivate->mHighlightMode = NodeItem::HighlightOff;
     setRect(-Radius/2, -Radius/2, Radius, Radius);
-    setBrush(QBrush(QColor(245, 250, 251)));
+    setBrush(QBrush(QColor(230, 230, 230, 168)));
     setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
     setZValue(10);
 }
@@ -54,8 +54,8 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* item, QW
     switch (mPrivate->mHighlightMode) {
         case NodeItem::HighlightOff:
         {
-            pen.setWidth(1);
-            pen.setColor(QColor(0, 0, 0));
+            pen.setWidth(5);
+            pen.setColor(QColor(128, 128, 128, 50));
         }
         break;
     case NodeItem::HighlightAsStartNode:
@@ -63,8 +63,8 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* item, QW
         pen.setColor(QColor(255, 0, 0));
         break;
     case NodeItem::HighlightAsFileNode:
-        pen.setWidth(2);
-        pen.setColor(QColor(255, 255, 0));
+        pen.setWidth(5);
+        pen.setColor(QColor(0, 200, 0, 128));
         break;
     }
     setPen(pen);
@@ -76,7 +76,7 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* item, QW
     painter->setPen(QColor(0, 0, 0));
 
     // Draw Name
-    QString name = QString("Name:%1").arg(mPrivate->mNode.getName());
+    QString name = mPrivate->mNode.getName();//QString("Name:%1").arg(mPrivate->mNode.getName());
     painter->drawText(QRectF(-Radius/2, -Radius/2, Radius, Radius/3), Qt::AlignCenter, name);
     // Draw FA
     painter->drawText(QRectF(-Radius/2, Radius/3-Radius/2, Radius, Radius/3), Qt::AlignCenter, mPrivate->mNode.getFA().join(","));

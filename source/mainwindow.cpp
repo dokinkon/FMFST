@@ -8,6 +8,7 @@
 #include "canvaswidget.h"
 #include "ui_mainwindow.h"
 #include "resultdialog.h"
+#include "mapwidget.h"
 
 #include <QtCore>
 #include <QtGui>

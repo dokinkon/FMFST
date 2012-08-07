@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui webkit
 CONFIG -= x86_64
 
 TARGET = FMFST
@@ -29,7 +29,8 @@ SOURCES +=  source/main.cpp\
             source/graph.cpp \
     source/resultdialog.cpp \
     source/canvaswidget.cpp \
-    source/createnodedialog.cpp
+    source/createnodedialog.cpp \
+    source/mapwidget.cpp
 
 HEADERS  += source/mainwindow.h \
             source/tableeditor.h \
@@ -48,7 +49,8 @@ HEADERS  += source/mainwindow.h \
             source/graph.h \
     source/resultdialog.h \
     source/canvaswidget.h \
-    source/createnodedialog.h
+    source/createnodedialog.h \
+    source/mapwidget.h
 
 FORMS    += form/mainwindow.ui \
             form/tableeditor.ui \

@@ -82,26 +82,6 @@ void CanvasWidget::slotCreateNode()
     }
 }
 
-/*
-void CanvasWidget::slotDestroyNodes()
-{
-    QVector<Node> nodes = mPrivate->mGraphicsScene->getSelectedNodes();
-    if (nodes.isEmpty())
-        return;
-
-    QString message("Are you sure deleting following nodes?\n");
-    foreach (const Node& node, nodes) {
-        message.append(node.getName()).append(", ");
-    }
-
-    if (QMessageBox::Yes==QMessageBox::question(this, "Are you sure?", message, QMessageBox::Yes, QMessageBox::No)) {
-        mPrivate->mGraphicsScene->destroyNodes(nodes);
-        GetNodeEditor().destroyNodes(nodes);
-        // TODO
-    }
-}
-*/
-
 void CanvasWidget::slotCreateConnection()
 {
     QVector<Node> nodes = mPrivate->mGraphicsScene->getSelectedNodes();
@@ -118,20 +98,6 @@ void CanvasWidget::slotCreateConnection()
     mPrivate->mGraphicsScene->createConnectionItem();
     GetPathWeightEditor().createEdge(nodes[0].getId(), nodes[1].getId());
 }
-
-/*
-void CanvasWidget::slotDestroyConnections()
-{
-    if (!mPrivate->mGraphicsScene->hasSelectedConnections())
-        return;
-
-    int r = QMessageBox::question(this, "Are you sure", "Are you sure to delete selected connections?", QMessageBox::Yes, QMessageBox::No);
-    if (r==QMessageBox::No)
-        return;
-
-    mPrivate->mGraphicsScene->destroyConnectionItems();
-}
-*/
 
 CanvasWidget::~CanvasWidget()
 {

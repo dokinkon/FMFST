@@ -3,5 +3,6 @@
         <file>resource/node.dat.default</file>
         <file>resource/scene.dat.default</file>
         <file>resource/weight.dat.default</file>
+        <file>resource/mapview.html</file>
     </qresource>
 </RCC>
