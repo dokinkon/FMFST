@@ -23,14 +23,22 @@ FMFSTDialog::~FMFSTDialog()
 void FMFSTDialog::commit()
 {
 	QSettings settings;
-	settings.setValue(JOBKEY, getProgram());
+    settings.setValue(JOBKEY, ui->lineEditProgram->text());
 	settings.setValue(FILEKEY, ui->lineEditFN->text());
 }
 
-QString FMFSTDialog::getProgram() const
+QSet<QString> FMFSTDialog::getPrograms() const
 {
-    return ui->lineEditProgram->text();
+    QSet<QString> programs;
+    QStringList ss = ui->lineEditProgram->text().split(",");
+    foreach (const QString& program, ss) {
+        if (program.isEmpty() || program.isNull())
+            continue;
 
+        programs << program;
+    }
+
+    return programs;
 }
 
 QSet<QString> FMFSTDialog::getFN() const

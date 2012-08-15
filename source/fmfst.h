@@ -18,7 +18,7 @@ public:
     /*!
      *
      */
-    QString run(const QString& program, const QSet<QString>& fileSet, const QSet<int>& necessaryNodes);
+    QString run(const QSet<QString>& programs, const QSet<QString>& fileSet, const QSet<int>& necessaryNodes);
 private:
 
     struct Private;
@@ -28,7 +28,7 @@ private:
 
     void findMFST(const Graph&, const QSet<QString>& fn, const QSet<int>& necessaryNodes);
 
-    QSet<int> findNodesWithProgram(const QString& program);
+    QSet<int> findNodesWithPrograms(const QSet<QString>& programs);
 
     QSet<Edge> getSpanningEdgesFromFST(const Graph&);
 
@@ -36,7 +36,7 @@ private:
 
     void dumpGraph(const Graph&);
 
-    float getMinimumEdgeLength(const QString&, const Graph&);
+    float getMinimumEdgeLength(const QSet<QString>&, const Graph&, const QSet<QString>& files);
 
     Graph mDCSGraph;
     QList<Graph> mFounds;

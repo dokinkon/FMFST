@@ -71,9 +71,10 @@ void MainWindow::slotFindMSPT()
         return;
 
     // check data correctness
-    QString program = dialog.getProgram();
-    if (!GetNodeEditor().hasProgram(program)) {
-        QMessageBox::critical(this, "ERROR", QString("No such program:%1").arg(program));
+    //QString program = dialog.getProgram();
+    QSet<QString> programs = dialog.getPrograms();
+    if (!GetNodeEditor().hasProgram(programs)) {
+        QMessageBox::critical(this, "ERROR", QString("No such node contains required programs"));
         return;
     }
 
@@ -92,14 +93,14 @@ void MainWindow::slotFindMSPT()
 
 
     QSet<int> necessaryNodes = GetNodeEditor().getNecessaryNodes();
-    QVector<Node> nodes = GetNodeEditor().nodes();
 
     QSet<int>::Iterator it = necessaryNodes.begin();
     while (it!=necessaryNodes.end()) {
-        int nodeIndex = *it;
-        Node& node = nodes[nodeIndex];
+        int nodeId = *it;
+
+        Node node = GetNodeEditor().getNode(nodeId);
         bool isValid = false;
-        foreach (const QString& f, node.getFA()) {
+        foreach (const QString& f, node.getFA().keys()) {
             if (fn.contains(f)) {
                 isValid = true;
                 break;
@@ -113,10 +114,10 @@ void MainWindow::slotFindMSPT()
         }
     }
 
-    foreach (int nodeIndex, necessaryNodes) {
-        Node& node = nodes[nodeIndex];
+    foreach (int nodeId, necessaryNodes) {
+        Node node = GetNodeEditor().getNode(nodeId);
 
-        foreach (const QString& f, node.getFA()) {
+        foreach (const QString& f, node.getFA().keys()) {
             if (fn.contains(f)) {
                 fn.remove(f);
             }
@@ -124,7 +125,7 @@ void MainWindow::slotFindMSPT()
     }
 
 
-    QString result = fmfst.run(program, fn, necessaryNodes);
+    QString result = fmfst.run(programs, fn, necessaryNodes);
     ResultDialog resultDialog(this);
     resultDialog.setResult(result);
     resultDialog.exec();

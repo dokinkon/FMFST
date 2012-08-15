@@ -15,7 +15,7 @@ public:
     explicit FMFSTDialog(QWidget *parent = 0);
     ~FMFSTDialog();
 
-    QString getProgram() const;
+    QSet<QString> getPrograms() const;
     QSet<QString> getFN() const;
 	void commit();
     

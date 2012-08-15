@@ -33,8 +33,6 @@ struct NodeEditor::Private
     bool deserialize();
     int generateId() const;
 
-    QStringList parseFPA(const QString&);
-    QString invParseFPA(const QStringList&);
     bool mSerializeEnabled;
 };
 
@@ -62,55 +60,32 @@ void NodeEditor::Private::resetNodeData()
     mNodes.clear();
 }
 
-QString NodeEditor::Private::invParseFPA(const QStringList& fpa)
+QString invParseFPA(const QMap<QString, float>& pa)
 {
     QString s;
-    for (int i=0;i<fpa.size();++i) {
-        if (i!=0) {
-            s.append(",");
-        }
-        s.append(fpa.at(i));
-    }
-    return s;
-}
-
-QString invParsePA(const QMap<QString, int>& pa)
-{
-    QString s;
-    QMap<QString, int>::ConstIterator it = pa.begin();
+    QMap<QString, float>::ConstIterator it = pa.begin();
     for (;it!=pa.end();++it) {
-        s.append(",").append(it.key()).append("(").append(QString::number(it.value())).append(")");
+        s.append(",").append(it.key()).append("(").append(QString::number(it.value(), 'f', 1)).append(")");
     }
     return s;
 }
 
-QStringList NodeEditor::Private::parseFPA(const QString& s)
+QMap<QString, float> parsePA(const QString& s)
 {
-    QStringList fpa;
+    QMap<QString, float> r;
     QStringList tokens = s.split(",");
     foreach (const QString& token, tokens) {
-        fpa.append(token.trimmed());
-    }
-    return fpa;
-}
-
-QMap<QString, int> parsePA(const QString& s)
-{
-    QMap<QString, int> r;
-    QStringList tokens = s.split(",");
-    foreach (const QString& token, tokens) {
+        if (token.isNull() || token.isEmpty())
+            continue;
         if (token.contains("(") && token.contains(")")) {
-            //qDebug() << "token = " << token;
             int start = token.indexOf("(");
             int end = token.indexOf(")");
             QString programName = token.left(start);
-            //qDebug() << "programName = " << programName;
             QString mid = token.mid(start + 1, end - start - 1);
-            //qDebug() << "mid = " << mid;
-            int familiar = mid.toInt();
+            float familiar = mid.toFloat();
             r[programName] = familiar;
         } else {
-            r[token] = 100;
+            r[token] = 1.0f;
         }
     }
     return r;
@@ -165,7 +140,7 @@ void NodeEditor::Private::updateNodeData(QTableWidget* table, bool needDeseriali
             item = new QTableWidgetItem("");
             table->setItem(i, ColPA, item);
         }
-        item->setText(invParsePA(node.getPA()));
+        item->setText(invParseFPA(node.getPA()));
     }
 
     qDebug() << "[NODE-EDITOR]: update node data ok";
@@ -193,7 +168,7 @@ void NodeEditor::Private::commitNodeData(QTableWidget* table)
         // FA
         item = table->item(row, ColFA);
         if (item) {
-            node.setFA(parseFPA(item->text()));
+            node.setFA(parsePA(item->text()));
         }
 
         // PA
@@ -227,7 +202,6 @@ bool NodeEditor::Private::serialize()
         ds << node.getName();
         ds << node.getFA();
         ds << node.getPA();
-        //qDebug() << "pa = " << node.getPA();
     }
     f.close();
     qDebug() << "[NODE-EDITOR]: serialize node.dat ok";
@@ -237,7 +211,6 @@ bool NodeEditor::Private::serialize()
 bool NodeEditor::Private::deserialize()
 {
     QFile f("node.dat");
-    //QFile f(":defaults/resource/node.dat.default");
     if (!f.open(QIODevice::ReadOnly)) {
         qDebug() << "FAILED TO OPEN \"node.dat\"";
         return false;
@@ -249,8 +222,8 @@ bool NodeEditor::Private::deserialize()
     while (!ds.atEnd()) {
         int id;
         QString name;
-        QStringList fa;
-        QMap<QString, int> pa;
+        QMap<QString, float> fa;
+        QMap<QString, float> pa;
         ds >> id >> name >> fa >> pa;
 
         pa.remove("");
@@ -311,7 +284,7 @@ Node NodeEditor::createNode(const QString& name, const QString& fa, const QStrin
     Node node;
     node.setId(mPrivate->generateId());
     node.setName(name);
-    node.setFA(mPrivate->parseFPA(fa));
+    node.setFA(parsePA(fa));
     node.setPA(parsePA(pa));
     mPrivate->mNodes.append(node);
     mPrivate->updateNodeData(ui->tableWidgetContent, false);
@@ -356,8 +329,27 @@ void NodeEditor::updateButtonClicked()
 bool NodeEditor::hasProgram(const QString& program) const
 {
     foreach (const Node& node, mPrivate->mNodes) {
-        QMap<QString, int> pa = node.getPA();
+        QMap<QString, float> pa = node.getPA();
         if (pa.contains(program))
+            return true;
+    }
+    return false;
+}
+
+bool NodeEditor::hasProgram(const QSet<QString>& programs) const
+{
+    foreach (const Node& node, mPrivate->mNodes) {
+        QMap<QString, float> pa = node.getPA();
+
+        bool found = true;
+        foreach (const QString& program, programs) {
+            if (!pa.contains(program)) {
+                found = false;
+                break;
+            }
+        }
+
+        if (found)
             return true;
     }
     return false;
@@ -366,7 +358,7 @@ bool NodeEditor::hasProgram(const QString& program) const
 bool NodeEditor::hasFile(const QString& file) const
 {
     foreach (const Node& node, mPrivate->mNodes) {
-        QStringList fa = node.getFA();
+        QMap<QString, float> fa = node.getFA();
         if (fa.contains(file)) {
             return true;
         }

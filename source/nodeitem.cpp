@@ -79,7 +79,14 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* item, QW
     QString name = mPrivate->mNode.getName();//QString("Name:%1").arg(mPrivate->mNode.getName());
     painter->drawText(QRectF(-Radius/2, -Radius/2, Radius, Radius/3), Qt::AlignCenter, name);
     // Draw FA
-    painter->drawText(QRectF(-Radius/2, Radius/3-Radius/2, Radius, Radius/3), Qt::AlignCenter, mPrivate->mNode.getFA().join(","));
+
+    // build FA string
+    QString faString;
+    foreach (const QString& fa, mPrivate->mNode.getFA().keys()) {
+        faString.append(",").append(fa);
+    }
+
+    painter->drawText(QRectF(-Radius/2, Radius/3-Radius/2, Radius, Radius/3), Qt::AlignCenter, faString);
     // Draw PA
 
     QStringList pa = mPrivate->mNode.getPA().keys();

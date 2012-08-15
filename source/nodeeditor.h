@@ -20,8 +20,9 @@ public:
     void destroyNodes(const QVector<Node>& nodes);
     QVector<Node> nodes() const;
     bool hasProgram(const QString&) const;
+    bool hasProgram(const QSet<QString>&) const;
     bool hasFile(const QString&) const;
-    Node getNode(int) const;
+    Node getNode(int nodeIndex) const;
 
     QSet<int> getNecessaryNodes() const;
 

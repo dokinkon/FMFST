@@ -71,12 +71,13 @@ QSet<Edge> FMFST::getSpanningEdgesFromFST(const Graph& fst)
     return edges;
 }
 
-QSet<int> FMFST::findNodesWithProgram(const QString& program)
+QSet<int> FMFST::findNodesWithPrograms(const QSet<QString>& programs)
 {
     QSet<int> nodes;
-    foreach (const Node& n, mPrivate->mNodes) {
-        if (n.getPA().contains(program)) {
-            nodes.insert(n.getId());
+    foreach (const Node& node, mPrivate->mNodes) {
+        //if (n.getPA().contains(program)) {
+        if (node.containsPrograms(programs)) {
+            nodes.insert(node.getId());
         }
     }
     return nodes;
@@ -138,9 +139,9 @@ void FMFST::findMFST(const Graph& fst, const QSet<QString>& fn, const QSet<int>&
         assert(node.isValid());
 
         QSet<QString> newFn = fn;
-        newFn -= node.getFA().toSet();
+        newFn -= node.getFASet();//node.getFA().toSet();
 
-        qDebug() << "FA on node X" << y + 1 << " are" << node.getFA().toSet();
+        //qDebug() << "FA on node X" << y + 1 << " are" << node.getFA().toSet();
 
         // update necessayNodes
         QSet<int> nn = necessaryNodes;
@@ -179,14 +180,25 @@ void FMFST::dumpGraph(const Graph& g)
     qDebug() << "}\n";
 }
 
-float FMFST::getMinimumEdgeLength(const QString& program, const Graph& g)
+float FMFST::getMinimumEdgeLength(const QSet<QString>& programs, const Graph& g, const QSet<QString>& files)
 {
-    foreach (int n, findNodesWithProgram(program)) {
+    foreach (int n, findNodesWithPrograms(programs)) {
         if (g.containsNode(n)) {
             Node node = mPrivate->findNode(n);
             assert(node.isValid());
-            int familiar = node.getPA()[program];
-            return (float)g.getTotalEdgeLength() / familiar;
+            //int familiar = node.getPA()[program];
+            float familiar = node.getFamiliarWithPrograms(programs);
+
+            // get file weighting
+            float fileWeighting = 0;
+            foreach (int nodeId, g.nodes()) {
+                foreach (const QString& file, files) {
+                    node = mPrivate->findNode(nodeId);
+                    fileWeighting += node.getFileWeighting(file);
+                }
+            }
+
+            return (float)(g.getTotalEdgeLength() + fileWeighting) / familiar;
         }
     }
     // something wrong...
@@ -242,7 +254,7 @@ static QString FormatResult(const QList<Graph>& trees, const QVector<Node>& node
     return result;
 }
 
-QString FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
+QString FMFST::run(const QSet<QString>& programs, const QSet<QString>& fn, const QSet<int>& necessaryNodes)
 {
     // clear previous data
     mDCSGraph.clear();
@@ -268,12 +280,12 @@ QString FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<i
     // remove the necessaryNodes that does not contain fn
 
     // 1. Get nodes that contain the program P
-    QSet<int> starts = findNodesWithProgram(program);
+    QSet<int> starts = findNodesWithPrograms(programs);
     //qDebug() << "INIT NODES:" << nodes;
     foreach (int nodeId, starts) {
         Node node = mPrivate->findNode(nodeId);
         assert(node.isValid());
-        QSet<QString> fa = node.getFA().toSet();
+        QSet<QString> fa = node.getFASet();//node.getFA().toSet();
         QSet<QString> newFn = fn;
         findMFST(node.getId(), newFn.subtract(fa), necessaryNodes);
         G.removeNode(node.getId());
@@ -288,7 +300,7 @@ QString FMFST::run(const QString& program, const QSet<QString>& fn, const QSet<i
         dumpGraph(fst);
         qDebug() << "EDGE LENGTH:" << fst.getTotalEdgeLength();
 
-        float len = getMinimumEdgeLength(program, fst);
+        float len = getMinimumEdgeLength(programs, fst, fn);
 
         if (len<minLength) {
             minLength = len;

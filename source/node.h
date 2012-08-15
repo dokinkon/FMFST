@@ -15,6 +15,12 @@ public:
     bool operator==(const Node&) const;
 
     bool isValid() const;
+    bool containsPrograms(const QSet<QString>&) const;
+    bool containsFile(const QString&) const;
+
+    float getFileWeighting(const QString&) const;
+
+    float getFamiliarWithPrograms(const QSet<QString>&) const;
 
     void connectTo(const Node&);
     void disconnectFrom(const Node&);
@@ -29,21 +35,25 @@ public:
     void setName(const QString&);
     QString getName() const;
 
-    Node& setFA(const QString&);
-    Node& setFA(const QStringList&);
-    QStringList getFA() const;
+    Node& setFA(const QString&, float weight = 1.0f);
+    Node& setFA(const QMap<QString, float>&);
+    QMap<QString, float> getFA() const;
+    /*!
+     * get FA as set
+     */
+    QSet<QString> getFASet() const;
 
-    Node& setPA(const QString&, int = 100);
-    Node& setPA(const QMap<QString, int>&);
-    QMap<QString, int> getPA() const;
+    Node& setPA(const QString&, float = 1.0f);
+    Node& setPA(const QMap<QString, float>&);
+    QMap<QString, float> getPA() const;
 
     QString toString() const;
 
 private:
     int mId;
     QString mName;
-    QStringList mFA;
-    QMap<QString, int> mPA;
+    QMap<QString, float> mFA;
+    QMap<QString, float> mPA;
     QSet<Node> mConnecteds;
 };
 

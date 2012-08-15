@@ -26,18 +26,46 @@ bool Node::isValid() const
     return mId >= 0;
 }
 
+float Node::getFamiliarWithPrograms(const QSet<QString>& programs) const
+{
+    float f = 0;
+
+    foreach (const QString& program, programs) {
+        if (mPA.contains(program)) {
+            f += mPA[program];
+        }
+    }
+    return f;
+}
+
+float Node::getFileWeighting(const QString& file) const
+{
+    if (mFA.contains(file)) {
+        return mFA[file];
+    }
+    return 0.0f;
+}
+
+bool Node::containsFile(const QString& file) const
+{
+    return mFA.contains(file);
+}
+
+bool Node::containsPrograms(const QSet<QString>& programs) const
+{
+    foreach (const QString& program, programs) {
+        if (!mPA.contains(program))
+            return false;
+    }
+    return true;
+}
+
 bool Node::operator==(const Node& rhs) const
 {
     if (mId!=rhs.mId)
         return false;
 
     if (mName!=rhs.mName)
-        return false;
-
-    if (mFA!=rhs.mFA)
-        return false;
-
-    if (mPA!=rhs.mPA)
         return false;
 
     return true;
@@ -84,41 +112,46 @@ QString Node::getName() const
     return mName;
 }
 
-Node& Node::setFA(const QString& fa)
+Node& Node::setFA(const QString& name, float weight)
 {
-	mFA.clear();
-    mFA.append(fa);
-    mFA.removeDuplicates();
+	mFA[name] = weight;
     return *this;
 }
 
-Node& Node::setFA(const QStringList& fa)
+Node& Node::setFA(const QMap<QString, float>& fa)
 {
-	mFA.clear();
-    mFA.append(fa);
-    mFA.removeDuplicates();
+    mFA = fa;
     return *this;
 }
 
-QStringList Node::getFA() const
+QMap<QString, float> Node::getFA() const
 {
     return mFA;
 }
 
-Node& Node::setPA(const QString& pa, int familiar)
+QSet<QString> Node::getFASet() const
+{
+    QSet<QString> fas;
+    foreach (const QString& fa, mFA.keys()) {
+        fas.insert(fa);
+    }
+    return fas;
+}
+
+Node& Node::setPA(const QString& pa, float familiar)
 {
     mPA[pa] = familiar;
     return *this;
 }
 
-Node& Node::setPA(const QMap<QString, int>& pa)
+Node& Node::setPA(const QMap<QString, float>& pa)
 {
     mPA = pa;
     mPA.remove("");
     return *this;
 }
 
-QMap<QString, int> Node::getPA() const
+QMap<QString, float> Node::getPA() const
 {
     return mPA;
 }
