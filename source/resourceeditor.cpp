@@ -14,6 +14,8 @@ struct ResourceEditor::Private
 {
     bool serialize();
     bool deserialize();
+    bool serializeToText();
+    bool deserializeFromText();
     void commitResourceData(QTableWidget*);
     void updateResourceData(QTableWidget*);
     QStringList mResources;
@@ -57,6 +59,42 @@ void ResourceEditor::Private::updateResourceData(QTableWidget* w)
     }
 }
 
+bool ResourceEditor::Private::serializeToText()
+{
+    QFile f("resource.dat");
+    if (!f.open(QIODevice::WriteOnly)) {
+        qDebug() << "[RESOURCE-EDITOR]: FAILED TO OPEN resource.dat";
+        return false;
+    }
+
+    QTextStream ts(&f);
+    foreach (const QString& r, mResources) {
+        ts << r << "\n";
+    }
+
+    f.close();
+    qDebug() << "[RESOURCE-EDITOR]: serialize ok!";
+    return true;
+}
+bool ResourceEditor::Private::deserializeFromText()
+{
+    QFile f("resource.dat");
+    if (!f.open(QIODevice::ReadOnly)) {
+        qDebug() << "[RESOURCE-EDITOR]: FAILED TO OPEN resource.dat";
+        return false;
+    }
+
+    QTextStream ts(&f);
+    mResources.clear();
+    while (!ts.atEnd()) {
+        QString line = ts.readLine();
+        mResources << line;
+    }
+
+    f.close();
+    qDebug() << "[RESOURCE-EDITOR]: deserialize ok!";
+    return true;
+}
 bool ResourceEditor::Private::serialize()
 {
     QFile f("resource.dat");

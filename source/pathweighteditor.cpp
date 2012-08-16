@@ -34,7 +34,9 @@ struct PathWeightEditor::Private
     void updateData(QTableWidget*, bool needDeserialize = true);
 
     bool serialize();
+    bool serializeToText();
     bool deserialize();
+    bool deserializeFromText();
 
     QList<Edge> mEdges;
 
@@ -114,6 +116,49 @@ void PathWeightEditor::Private::updateData(QTableWidget* w, bool needDeserialize
         item = new QTableWidgetItem(QString::number(edge.getReliability(), 'g', 2));
         w->setItem(i, PathRelCol, item);
     }
+}
+
+bool PathWeightEditor::Private::serializeToText()
+{
+    if (!mSerializeEnabled) {
+        qDebug() << "[WARNING][EDGE-EDITOR]:Failed to serialize";
+        return false;
+    }
+    QFile f(FileName);
+    if (!f.open(QIODevice::WriteOnly))
+        return false;
+
+    QTextStream ts(&f);
+
+    foreach (const Edge& edge, mEdges) {
+        ts << edge.v1() << ";" << edge.v2() << ";" << edge.getTimeWeight() << ";" << edge.getReliability() << "\n";
+    }
+
+    //qDebug() << "[EDGE-EDITOR]:serialize ok (" << mEdges.size() << ")";
+    f.close();
+    return true;
+}
+
+bool PathWeightEditor::Private::deserializeFromText()
+{
+    QFile f(FileName);
+    if (!f.open(QIODevice::ReadOnly))
+        return false;
+
+    mEdges.clear();
+
+    QTextStream ts(&f);
+    while (!ts.atEnd()) {
+        QString line = ts.readLine();
+        int node1Id = line.section(";", 0, 0).toInt();
+        int node2Id = line.section(";", 1, 1).toInt();
+        float timeWeight = line.section(";", 2, 2).toFloat();
+        float reliability = line.section(";", 3, 3).toFloat();
+        mEdges.append(Edge(node1Id, node2Id, timeWeight, reliability));
+    }
+    f.close();
+    qDebug() << "[EDGE-MANAGER]: deserialize ok (" << mEdges.size() << ")";
+    return true;
 }
 
 bool PathWeightEditor::Private::serialize()

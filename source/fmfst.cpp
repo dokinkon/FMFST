@@ -222,13 +222,13 @@ static QString FormatResult(const QList<Graph>& trees, const QVector<Node>& node
         QSet<int> dumpped;
 
         if (start==-1) {
-            result.append("起點:有誤\n");
+            result.append("Start Location Error\n");
         } else {
-            result.append(QString::fromUtf8("起點：")).append(nodes[start].getName()).append("\n");
+            result.append(QString::fromUtf8("Start:")).append(nodes[start].getName()).append("\n");
             dumpped.insert(start);
         }
 
-        result.append(QString::fromUtf8("連接必經點:"));
+        result.append(QString::fromUtf8("Necessary:"));
         foreach (int i, necessaryNodes) {
 
             if (tree.containsNode(i)) {
@@ -243,7 +243,7 @@ static QString FormatResult(const QList<Graph>& trees, const QVector<Node>& node
             ns.remove(i);
         }
 
-        result.append(QString::fromUtf8("經過節點:"));
+        result.append(QString::fromUtf8("Nodes"));
         foreach (int i, ns) {
             result.append(nodes[i].getName()).append(" ");
         }

@@ -30,6 +30,8 @@ struct NodeEditor::Private
     void updateNodeData(QTableWidget*, bool needDeserialize = true);
     void resetNodeData();
     bool serialize();
+    bool serializeToText();
+    bool deserializeFromText();
     bool deserialize();
     int generateId() const;
 
@@ -185,6 +187,89 @@ void NodeEditor::Private::commitNodeData(QTableWidget* table)
         return;
 }
 
+bool NodeEditor::Private::serializeToText()
+{
+    if (!mSerializeEnabled)
+        return false;
+
+    QFile f("node.dat");
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "FAILED TO OPEN node.dat";
+        return false;
+    }
+
+    QTextStream ts(&f);
+    
+    foreach (const Node& node, mNodes) {
+
+        QMap<QString, float> fa = node.getFA();
+        QMap<QString, float> pa = node.getPA();
+
+        ts << "NODE.ID=" << node.getId() << "\n";
+        ts << "NODE.NAME=" << node.getName() << "\n";
+        ts << "NODE.FA.COUNT=" << fa.size() << "\n";
+        QMap<QString, float>::ConstIterator it = fa.begin();
+        for (;it!=fa.end();++it) {
+            ts << it.key() << "=" << it.value() << "\n";
+        }
+
+        ts << "NODE.PA.COUNT=" << pa.size() << "\n";
+        it = pa.begin();
+        for (;it!=pa.end();++it) {
+            ts << it.key() << "=" << it.value() << "\n";
+        }
+    }
+
+    return true;
+}
+bool NodeEditor::Private::deserializeFromText()
+{
+    QFile f("node.dat");
+    if (!f.open(QIODevice::ReadOnly)) {
+        qDebug() << "FAILED TO OPEN \"node.dat\"";
+        return false;
+    }
+
+    mNodes.clear();
+
+    QTextStream ts(&f);
+    while (!ts.atEnd()) {
+        QString line = ts.readLine();
+        QString nodeId = line.replace("NODE.ID=", "");
+
+        line = ts.readLine();
+        QString nodeName = line.replace("NODE.NAME=","");
+
+        line = ts.readLine();
+        int faCount = line.replace("NODE.FA.COUNT", "").toInt();
+
+        QMap<QString, float> fa, pa;
+        for (int i=0;i<faCount;i++) {
+            line = ts.readLine();
+            QString faName = line.section("=", 0, 0);
+            float faValue  = line.section("=", 1, 1).toFloat();
+            fa[faName] = faValue;
+        }
+
+        line = ts.readLine();
+        int paCount = line.replace("NODE.PA.COUNT", "").toInt();
+        for (int i=0;i<paCount;i++) {
+            line = ts.readLine();
+            QString paName = line.section("=", 0, 0);
+            float paValue  = line.section("=", 1, 1);
+            pa[paName] = paValue;
+        }
+
+        Node node;
+        node.setId(nodeId);
+        node.setName(nodeName);
+        node.setFA(fa);
+        node.setPA(pa);
+        mNodes.append(node);
+    }
+    qDebug() << "[NODE-EDITOR]: deserialize node.dat ok";
+    return true;
+}
 bool NodeEditor::Private::serialize()
 {
     if (!mSerializeEnabled)
@@ -207,6 +292,8 @@ bool NodeEditor::Private::serialize()
     qDebug() << "[NODE-EDITOR]: serialize node.dat ok";
     return true;
 }
+
+
 
 bool NodeEditor::Private::deserialize()
 {
