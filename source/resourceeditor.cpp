@@ -33,7 +33,8 @@ void ResourceEditor::Private::commitResourceData(QTableWidget* w)
         assert(item);
         mResources << item->text();
     }
-    serialize();
+    //serialize();
+    serializeToText();
 }
 
 // from data model to ui
@@ -42,7 +43,8 @@ void ResourceEditor::Private::updateResourceData(QTableWidget* w)
     if (!w)
         return;
 
-    if (!deserialize())
+    //if (!deserialize())
+    if (!deserializeFromText())
         return;
 
     for (int i=0;i<mResources.size();++i) {
@@ -61,7 +63,7 @@ void ResourceEditor::Private::updateResourceData(QTableWidget* w)
 
 bool ResourceEditor::Private::serializeToText()
 {
-    QFile f("resource.dat");
+    QFile f("resource.txt");
     if (!f.open(QIODevice::WriteOnly)) {
         qDebug() << "[RESOURCE-EDITOR]: FAILED TO OPEN resource.dat";
         return false;
@@ -78,7 +80,7 @@ bool ResourceEditor::Private::serializeToText()
 }
 bool ResourceEditor::Private::deserializeFromText()
 {
-    QFile f("resource.dat");
+    QFile f("resource.txt");
     if (!f.open(QIODevice::ReadOnly)) {
         qDebug() << "[RESOURCE-EDITOR]: FAILED TO OPEN resource.dat";
         return false;

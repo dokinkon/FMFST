@@ -100,7 +100,8 @@ void NodeEditor::Private::updateNodeData(QTableWidget* table, bool needDeseriali
         return;
 
     if (needDeserialize) {
-        if (!deserialize())
+        //if (!deserialize())
+        if (!deserializeFromText())
             return;
     }
 
@@ -181,7 +182,8 @@ void NodeEditor::Private::commitNodeData(QTableWidget* table)
 
         mNodes.append(node);
     }
-    serialize();
+    //serialize();
+    serializeToText();
 
     if (!GetGraphicsScenePtr())
         return;
@@ -192,7 +194,7 @@ bool NodeEditor::Private::serializeToText()
     if (!mSerializeEnabled)
         return false;
 
-    QFile f("node.dat");
+    QFile f("node.txt");
     if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qDebug() << "FAILED TO OPEN node.dat";
         return false;
@@ -224,7 +226,7 @@ bool NodeEditor::Private::serializeToText()
 }
 bool NodeEditor::Private::deserializeFromText()
 {
-    QFile f("node.dat");
+    QFile f("node.txt");
     if (!f.open(QIODevice::ReadOnly)) {
         qDebug() << "FAILED TO OPEN \"node.dat\"";
         return false;
@@ -241,7 +243,7 @@ bool NodeEditor::Private::deserializeFromText()
         QString nodeName = line.replace("NODE.NAME=","");
 
         line = ts.readLine();
-        int faCount = line.replace("NODE.FA.COUNT", "").toInt();
+        int faCount = line.replace("NODE.FA.COUNT=", "").toInt();
 
         QMap<QString, float> fa, pa;
         for (int i=0;i<faCount;i++) {
@@ -252,16 +254,16 @@ bool NodeEditor::Private::deserializeFromText()
         }
 
         line = ts.readLine();
-        int paCount = line.replace("NODE.PA.COUNT", "").toInt();
+        int paCount = line.replace("NODE.PA.COUNT=", "").toInt();
         for (int i=0;i<paCount;i++) {
             line = ts.readLine();
             QString paName = line.section("=", 0, 0);
-            float paValue  = line.section("=", 1, 1);
+            float paValue  = line.section("=", 1, 1).toFloat();
             pa[paName] = paValue;
         }
 
         Node node;
-        node.setId(nodeId);
+        node.setId(nodeId.toInt());
         node.setName(nodeName);
         node.setFA(fa);
         node.setPA(pa);
@@ -375,7 +377,8 @@ Node NodeEditor::createNode(const QString& name, const QString& fa, const QStrin
     node.setPA(parsePA(pa));
     mPrivate->mNodes.append(node);
     mPrivate->updateNodeData(ui->tableWidgetContent, false);
-    mPrivate->serialize();
+    //mPrivate->serialize();
+    mPrivate->serializeToText();
     return node;
 }
 
@@ -401,7 +404,8 @@ QVector<Node> NodeEditor::nodes() const
 
 void NodeEditor::closeEvent(QCloseEvent* e)
 {
-    mPrivate->serialize();
+    //mPrivate->serialize();
+    mPrivate->serializeToText();
     QWidget::closeEvent(e);
 }
 

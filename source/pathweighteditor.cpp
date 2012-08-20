@@ -72,7 +72,8 @@ void PathWeightEditor::Private::commitData(QTableWidget* w)
         mEdges.append(Edge(node1Id, node2Id, timeWeight, reliability));
     }
 
-    serialize();
+    //serialize();
+    serializeToText();
 
     // update data to graphics scene
     if (!GetGraphicsScenePtr())
@@ -87,7 +88,8 @@ void PathWeightEditor::Private::updateData(QTableWidget* w, bool needDeserialize
         return;
 
     if (needDeserialize) {
-        if (!deserialize())
+        //if (!deserialize())
+        if (!deserializeFromText())
             return;
     }
 
@@ -124,7 +126,7 @@ bool PathWeightEditor::Private::serializeToText()
         qDebug() << "[WARNING][EDGE-EDITOR]:Failed to serialize";
         return false;
     }
-    QFile f(FileName);
+    QFile f("edges.txt");
     if (!f.open(QIODevice::WriteOnly))
         return false;
 
@@ -141,7 +143,7 @@ bool PathWeightEditor::Private::serializeToText()
 
 bool PathWeightEditor::Private::deserializeFromText()
 {
-    QFile f(FileName);
+    QFile f("edges.txt");
     if (!f.open(QIODevice::ReadOnly))
         return false;
 
@@ -328,12 +330,14 @@ void PathWeightEditor::updateNodeData()
 
 void PathWeightEditor::serialize()
 {
-    mPrivate->serialize();
+    //mPrivate->serialize();
+    mPrivate->serializeToText();
 }
 
 void PathWeightEditor::closeEvent(QCloseEvent* e)
 {
-    mPrivate->serialize();
+    //mPrivate->serialize();
+    mPrivate->serializeToText();
     QWidget::closeEvent(e);
 }
 
